@@ -33,6 +33,33 @@ export default function MachineDetails() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      nextImage();
+    }
+    if (isRightSwipe) {
+      prevImage();
+    }
+  };
 
   useEffect(() => {
     const fetchMachine = async () => {
@@ -186,7 +213,12 @@ export default function MachineDetails() {
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Image Section with Carousel */}
-            <div className="relative aspect-video lg:aspect-auto lg:h-[500px] bg-slate-100 group overflow-hidden">
+            <div 
+              className="relative aspect-video lg:aspect-auto lg:h-[500px] bg-slate-100 group overflow-hidden"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
               <img
                 src={machine.image_urls[currentImageIndex]}
                 alt={`${machine.name} - Image ${currentImageIndex + 1}`}
