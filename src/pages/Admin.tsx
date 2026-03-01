@@ -277,6 +277,12 @@ export default function Admin() {
         .filter(p => !p.isExisting && p.file)
         .map(p => p.file as File);
 
+      // Check total file size (Vercel has a 4.5MB limit for serverless functions)
+      const totalSize = newFilesToUpload.reduce((sum, file) => sum + file.size, 0);
+      if (totalSize > 4.5 * 1024 * 1024) {
+        throw new Error("Total image size exceeds 4.5MB. Please upload smaller images or fewer images at once to comply with Vercel's limits.");
+      }
+
       let uploadedUrls: string[] = [];
       if (newFilesToUpload.length > 0) {
         const uploadFormData = new FormData();
@@ -291,8 +297,18 @@ export default function Admin() {
         });
 
         if (!uploadRes.ok) {
-          const errorData = await uploadRes.json();
-          throw new Error(errorData.error || "Failed to upload images");
+          let errorMsg = "Failed to upload images";
+          try {
+            const errorData = await uploadRes.json();
+            errorMsg = errorData.error || errorMsg;
+          } catch (e) {
+            if (uploadRes.status === 413) {
+              errorMsg = "File too large. Vercel limits uploads to 4.5MB total.";
+            } else {
+              errorMsg = `Upload failed with status ${uploadRes.status}`;
+            }
+          }
+          throw new Error(errorMsg);
         }
 
         const data = await uploadRes.json();

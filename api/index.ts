@@ -17,8 +17,15 @@ function getPool() {
       throw new Error("POSTGRES_URL is not set.");
     }
     
-    // Strip sslmode from the connection string so it doesn't override our explicit ssl config
-    const connectionString = process.env.POSTGRES_URL.replace(/\?sslmode=[^&]+/, '').replace(/&sslmode=[^&]+/, '');
+    let connectionString = process.env.POSTGRES_URL;
+    try {
+      // Safely remove sslmode if present so it doesn't conflict with our ssl config
+      const url = new URL(connectionString);
+      url.searchParams.delete('sslmode');
+      connectionString = url.toString();
+    } catch (e) {
+      console.warn("Could not parse POSTGRES_URL as URL");
+    }
     
     pool = new Pool({
       connectionString,
@@ -89,6 +96,37 @@ async function ensureDb() {
     console.error("DB Init error:", e);
   }
 }
+
+app.get("/api/debug-db", async (req, res) => {
+  try {
+    const pool = getPool();
+    const result = await pool.query('SELECT NOW()');
+    
+    let tableExists = false;
+    let machineCount = 0;
+    try {
+      const countRes = await pool.query('SELECT COUNT(*) as count FROM machines');
+      tableExists = true;
+      machineCount = parseInt(countRes.rows[0].count);
+    } catch (e) {
+      tableExists = false;
+    }
+
+    res.json({ 
+      status: "ok", 
+      time: result.rows[0].now, 
+      env_set: !!process.env.POSTGRES_URL,
+      tableExists,
+      machineCount
+    });
+  } catch (e: any) {
+    res.status(500).json({ 
+      error: e.message, 
+      stack: e.stack, 
+      env_set: !!process.env.POSTGRES_URL 
+    });
+  }
+});
 
 app.post("/api/auth/login", (req, res) => {
   const { password } = req.body;
@@ -189,9 +227,9 @@ app.get("/api/machines", async (req, res) => {
       return { ...m, image_urls: urls };
     });
     res.json(formattedMachines);
-  } catch (error) {
+  } catch (error: any) {
     console.error("GET /api/machines error:", error);
-    res.status(500).json({ error: "Failed to fetch machines" });
+    res.status(500).json({ error: "Failed to fetch machines", details: error.message });
   }
 });
 
