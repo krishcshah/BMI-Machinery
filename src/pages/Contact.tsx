@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone, Send, Loader2 } from "lucide-react";
+import { Mail, Phone, Send, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { CONTACT_INFO } from "../constants";
 
@@ -114,26 +114,13 @@ export default function Contact() {
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-blue-50 p-3 rounded-xl shrink-0">
-                    <MapPin className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">
-                      Head Office
-                    </h4>
-                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
-                      {CONTACT_INFO.address}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-blue-50 p-3 rounded-xl shrink-0">
                     <Phone className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Phone</h4>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      {CONTACT_INFO.phone}
+                      {CONTACT_INFO.phones[0]}<br />
+                      {CONTACT_INFO.phones[1]}
                     </p>
                   </div>
                 </div>
@@ -145,7 +132,8 @@ export default function Contact() {
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Email</h4>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      {CONTACT_INFO.email}
+                      {CONTACT_INFO.emails[0]}<br />
+                      {CONTACT_INFO.emails[1]}
                     </p>
                   </div>
                 </div>

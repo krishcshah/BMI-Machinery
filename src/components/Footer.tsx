@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Settings, Mail, Phone, MapPin } from "lucide-react";
+import { Settings, Mail, Phone } from "lucide-react";
 import { CONTACT_INFO } from "../constants";
 
 export default function Footer() {
@@ -88,19 +88,21 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Contact</h3>
             <ul className="space-y-4 text-sm">
-              <li className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-blue-500 shrink-0" />
-                <span>
-                  {CONTACT_INFO.address}
-                </span>
+              <li className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-blue-500 shrink-0" />
+                <span>{CONTACT_INFO.phones[0]}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-blue-500 shrink-0" />
-                <span>{CONTACT_INFO.phone}</span>
+                <span>{CONTACT_INFO.phones[1]}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-blue-500 shrink-0" />
-                <span>{CONTACT_INFO.email}</span>
+                <span>{CONTACT_INFO.emails[0]}</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-blue-500 shrink-0" />
+                <span>{CONTACT_INFO.emails[1]}</span>
               </li>
             </ul>
           </div>

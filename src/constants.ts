@@ -1,7 +1,6 @@
 export const CONTACT_INFO = {
-  address: "123 Industrial Estate, Phase 1, Mumbai, Maharashtra 400001",
-  phone: "+91 98765 43210",
-  email: "info@bmimachinery.in",
+  phones: ["+91 98765 43210", "+91 91234 56789"],
+  emails: ["info@bmimachinery.in", "sales@bmimachinery.in"],
   website: "www.bmimachinery.in",
   companyName: "BMI Machinery"
 };

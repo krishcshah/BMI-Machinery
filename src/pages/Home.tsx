@@ -9,6 +9,7 @@ import {
   Zap,
   Users,
   Award,
+  Star,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
@@ -47,6 +48,45 @@ export default function Home() {
       description:
         "We provide 24/7 technical assistance, genuine spare parts, and preventative maintenance contracts to maximize the uptime of your manufacturing lines across India.",
     },
+  ];
+
+  const reviews = [
+    {
+      name: "Rajesh Sharma",
+      title: "CEO, Sharma Packaging",
+      avatar: "https://picsum.photos/seed/rajesh/100/100",
+      text: "BMI Machinery completely transformed our production line. Their expertise in sourcing the right Heidelberg press for our needs was invaluable. The installation was seamless and their ongoing support is top-notch."
+    },
+    {
+      name: "Anita Desai",
+      title: "Operations Director, PrintTech India",
+      avatar: "https://picsum.photos/seed/anita/100/100",
+      text: "We were hesitant about importing heavy machinery, but BMI made the entire process transparent and stress-free. They handled all the customs and logistics perfectly. Highly recommended!"
+    },
+    {
+      name: "Vikram Singh",
+      title: "Managing Director, Singh Graphics",
+      avatar: "https://picsum.photos/seed/vikram/100/100",
+      text: "The level of technical expertise BMI brings is unmatched. Their engineers trained our staff thoroughly and are always available when we need them. A true partner in our growth."
+    },
+    {
+      name: "Priya Patel",
+      title: "Founder, Patel Mouldings",
+      avatar: "https://picsum.photos/seed/priya/100/100",
+      text: "From the initial consultation to the final commissioning, BMI Machinery exceeded our expectations. They helped us secure financing and delivered exactly what they promised, on time."
+    },
+    {
+      name: "Sanjay Gupta",
+      title: "Production Head, Gupta Industries",
+      avatar: "https://picsum.photos/seed/sanjay/100/100",
+      text: "We've purchased three machines through BMI over the last five years. Their consistent quality of service and deep understanding of the Indian market makes them our go-to supplier."
+    },
+    {
+      name: "Meera Reddy",
+      title: "CEO, Reddy Print Solutions",
+      avatar: "https://picsum.photos/seed/meera/100/100",
+      text: "Outstanding service! BMI not only found the perfect cutting machine for our specific requirements but also negotiated a great price. Their after-sales support has been fantastic."
+    }
   ];
 
   return (
@@ -215,6 +255,38 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-24 bg-slate-900 text-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Clients Say</h2>
+          <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+            Don't just take our word for it. Here's what industry leaders have to say about partnering with BMI Machinery.
+          </p>
+        </div>
+
+        <div className="relative flex overflow-x-hidden group">
+          <div className="animate-marquee flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
+            {[...reviews, ...reviews].map((review, index) => (
+              <div key={index} className="w-[350px] shrink-0 bg-slate-800 rounded-2xl p-8 border border-slate-700 flex flex-col whitespace-normal shadow-xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <img src={review.avatar} alt={review.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-600" />
+                  <div>
+                    <h4 className="font-bold text-lg text-white">{review.name}</h4>
+                    <p className="text-sm text-slate-400">{review.title}</p>
+                  </div>
+                </div>
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-slate-300 italic leading-relaxed">"{review.text}"</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

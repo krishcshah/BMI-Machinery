@@ -16,6 +16,7 @@ import {
 import { jsPDF } from "jspdf/dist/jspdf.es.min.js";
 import autoTable from "jspdf-autotable";
 import { CONTACT_INFO } from "../constants";
+import { applyPdfBranding, applyPdfFooter } from "../utils/pdfUtils";
 
 interface Machine {
   id: number;
@@ -60,38 +61,7 @@ export default function MachineDetails() {
       const doc = new jsPDF();
       const companyName = CONTACT_INFO.companyName;
       
-      const addFooter = (pdf: jsPDF) => {
-        const pageCount = (pdf as any).internal.getNumberOfPages();
-        pdf.setFontSize(10);
-        pdf.setTextColor(150);
-        for (let i = 1; i <= pageCount; i++) {
-          pdf.setPage(i);
-          const footerText = `${CONTACT_INFO.address} | ${CONTACT_INFO.phone} | ${CONTACT_INFO.email}`;
-          const pageSize = pdf.internal.pageSize;
-          const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
-          const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
-          
-          pdf.setDrawColor(226, 232, 240);
-          pdf.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
-          
-          const textWidth = pdf.getTextWidth(footerText);
-          pdf.text(footerText, (pageWidth - textWidth) / 2, pageHeight - 10);
-          pdf.text(`Page ${i} of ${pageCount}`, pageWidth - 30, pageHeight - 10);
-        }
-      };
-
-      // Header
-      doc.setFontSize(22);
-      doc.setTextColor(30, 41, 59);
-      doc.text(companyName, 14, 22);
-      
-      doc.setFontSize(12);
-      doc.setTextColor(100, 116, 139);
-      doc.text("Product Brochure", 14, 30);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 37);
-      
-      doc.setDrawColor(226, 232, 240);
-      doc.line(14, 42, 196, 42);
+      await applyPdfBranding(doc, "Product Brochure");
 
       // Title
       doc.setFontSize(24);
@@ -143,17 +113,19 @@ export default function MachineDetails() {
 
       // Specifications on new page
       doc.addPage();
+      await applyPdfBranding(doc, "Product Brochure");
+      
       doc.setFontSize(18);
       doc.setTextColor(30, 41, 59);
-      doc.text("Technical Specifications", 14, 22);
+      doc.text("Technical Specifications", 14, 55);
       
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105);
       const specs = machine.specifications_md.replace(/#/g, '').replace(/\*/g, '');
       const splitSpecs = doc.splitTextToSize(specs, 180);
-      doc.text(splitSpecs, 14, 32);
+      doc.text(splitSpecs, 14, 65);
 
-      addFooter(doc);
+      await applyPdfFooter(doc);
       doc.save(`${machine.name.replace(/\s+/g, '_')}_Brochure.pdf`);
     } catch (error) {
       console.error("Brochure generation failed:", error);

@@ -228,8 +228,16 @@ app.get("/api/machines", async (req, res) => {
     });
     res.json(formattedMachines);
   } catch (error: any) {
+    let errorMessage = "Failed to fetch machines";
+    let details = error.message;
+    
+    if (error.message.includes("ENOTFOUND") && error.message.includes("supabase.co")) {
+      errorMessage = "Supabase IPv6 Connection Error";
+      details = "Vercel does not support Supabase's direct IPv6 connection. Please go to your Supabase dashboard, enable 'Connection Pooling', and use the Pooler URL (usually ending in pooler.supabase.com:6543) as your POSTGRES_URL.";
+    }
+
     console.error("GET /api/machines error:", error);
-    res.status(500).json({ error: "Failed to fetch machines", details: error.message });
+    res.status(500).json({ error: errorMessage, details });
   }
 });
 
@@ -308,6 +316,13 @@ app.post("/api/machines", authMiddleware, async (req, res) => {
     if (error.message.includes('unique constraint')) {
       return res.status(400).json({ error: "A machine with this slug already exists." });
     }
+    
+    if (error.message.includes("ENOTFOUND") && error.message.includes("supabase.co")) {
+      return res.status(500).json({ 
+        error: "Supabase IPv6 Connection Error. Vercel does not support Supabase's direct IPv6 connection. Please go to your Supabase dashboard, enable 'Connection Pooling', and use the Pooler URL (usually ending in pooler.supabase.com:6543) as your POSTGRES_URL." 
+      });
+    }
+
     res.status(500).json({ error: "Failed to add machine: " + error.message });
   }
 });

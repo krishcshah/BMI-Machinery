@@ -4,6 +4,7 @@ import { Search, Filter, ArrowRight, Download, FileText, Loader2, ChevronDown } 
 import { jsPDF } from "jspdf/dist/jspdf.es.min.js";
 import autoTable from "jspdf-autotable";
 import { CONTACT_INFO } from "../constants";
+import { applyPdfBranding, applyPdfFooter } from "../utils/pdfUtils";
 
 interface Machine {
   id: number;
@@ -95,38 +96,7 @@ export default function Catalogue() {
       const doc = new jsPDF();
       const companyName = CONTACT_INFO.companyName;
       
-      const addFooter = (pdf: jsPDF) => {
-        const pageCount = (pdf as any).internal.getNumberOfPages();
-        pdf.setFontSize(10);
-        pdf.setTextColor(150);
-        for (let i = 1; i <= pageCount; i++) {
-          pdf.setPage(i);
-          const footerText = `${CONTACT_INFO.address} | ${CONTACT_INFO.phone} | ${CONTACT_INFO.email}`;
-          const pageSize = pdf.internal.pageSize;
-          const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
-          const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
-          
-          pdf.setDrawColor(226, 232, 240);
-          pdf.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
-          
-          const textWidth = pdf.getTextWidth(footerText);
-          pdf.text(footerText, (pageWidth - textWidth) / 2, pageHeight - 10);
-          pdf.text(`Page ${i} of ${pageCount}`, pageWidth - 30, pageHeight - 10);
-        }
-      };
-
-      // Header
-      doc.setFontSize(22);
-      doc.setTextColor(30, 41, 59); // slate-800
-      doc.text(companyName, 14, 22);
-      
-      doc.setFontSize(12);
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text("Product Catalogue", 14, 30);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 37);
-      
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.line(14, 42, 196, 42);
+      await applyPdfBranding(doc, "Product Catalogue");
 
       const tableData = machines.map((m) => [
         m.name,
@@ -140,19 +110,21 @@ export default function Catalogue() {
         body: tableData,
         headStyles: { fillColor: [37, 99, 235] }, // blue-600
         alternateRowStyles: { fillColor: [248, 250, 252] }, // slate-50
-        margin: { top: 50 },
+        margin: { top: 50, bottom: 50 },
       });
 
       // Add detailed pages for each machine
       for (const machine of machines) {
         doc.addPage();
+        await applyPdfBranding(doc, "Machine Details");
+        
         doc.setFontSize(20);
         doc.setTextColor(30, 41, 59);
-        doc.text(machine.name, 14, 22);
+        doc.text(machine.name, 14, 55);
         
         doc.setFontSize(12);
         doc.setTextColor(37, 99, 235);
-        doc.text(`Category: ${machine.category}`, 14, 30);
+        doc.text(`Category: ${machine.category}`, 14, 63);
         
         // Try to add image
         if (machine.image_urls && machine.image_urls.length > 0) {
@@ -177,7 +149,7 @@ export default function Catalogue() {
             if (ctx) {
               ctx.drawImage(img, 0, 0);
               const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-              doc.addImage(dataUrl, "JPEG", 14, 35, 180, 100);
+              doc.addImage(dataUrl, "JPEG", 14, 70, 180, 100);
             }
           } catch (e) {
             console.error("Error adding image to PDF:", e);
@@ -186,12 +158,12 @@ export default function Catalogue() {
 
         doc.setFontSize(14);
         doc.setTextColor(30, 41, 59);
-        doc.text("Description", 14, 145);
+        doc.text("Description", 14, 180);
         
         doc.setFontSize(11);
         doc.setTextColor(71, 85, 105); // slate-600
         const splitDescription = doc.splitTextToSize(machine.short_description, 180);
-        doc.text(splitDescription, 14, 152);
+        doc.text(splitDescription, 14, 187);
 
         // Fetch full details for specifications
         try {
@@ -201,13 +173,13 @@ export default function Catalogue() {
             if (fullData.specifications_md) {
               doc.setFontSize(14);
               doc.setTextColor(30, 41, 59);
-              doc.text("Specifications", 14, 175);
+              doc.text("Specifications", 14, 210);
               
               doc.setFontSize(10);
               doc.setTextColor(71, 85, 105);
               const specs = fullData.specifications_md.replace(/#/g, '').replace(/\*/g, '');
               const splitSpecs = doc.splitTextToSize(specs, 180);
-              doc.text(splitSpecs, 14, 182);
+              doc.text(splitSpecs, 14, 217);
             }
           }
         } catch (e) {
@@ -215,7 +187,7 @@ export default function Catalogue() {
         }
       }
 
-      addFooter(doc);
+      await applyPdfFooter(doc);
       doc.save(`${companyName.replace(/\s+/g, '_')}_Catalogue.pdf`);
     } catch (error) {
       console.error("PDF Generation failed:", error);
