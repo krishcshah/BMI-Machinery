@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { sql } from "@vercel/postgres";
+import { Pool } from "pg";
 import { put, del } from "@vercel/blob";
 
 const app = express();
@@ -8,6 +8,27 @@ app.use(express.json());
 
 // Memory storage for Vercel Blob
 const upload = multer({ storage: multer.memoryStorage() });
+
+let pool: Pool | null = null;
+
+function getPool() {
+  if (!pool) {
+    if (!process.env.POSTGRES_URL) {
+      throw new Error("POSTGRES_URL is not set.");
+    }
+    
+    // Strip sslmode from the connection string so it doesn't override our explicit ssl config
+    const connectionString = process.env.POSTGRES_URL.replace(/\?sslmode=[^&]+/, '').replace(/&sslmode=[^&]+/, '');
+    
+    pool = new Pool({
+      connectionString,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+  }
+  return pool;
+}
 
 const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || "admin123";
 const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -27,7 +48,7 @@ async function ensureDb() {
     return;
   }
   try {
-    await sql`
+    await getPool().query(`
       CREATE TABLE IF NOT EXISTS machines (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -37,10 +58,10 @@ async function ensureDb() {
         specifications_md TEXT NOT NULL,
         slug TEXT UNIQUE
       )
-    `;
-    const countRes = await sql`SELECT COUNT(*) as count FROM machines`;
+    `);
+    const countRes = await getPool().query('SELECT COUNT(*) as count FROM machines');
     if (parseInt(countRes.rows[0].count) === 0) {
-      await sql`
+      await getPool().query(`
         INSERT INTO machines (name, category, image_urls, short_description, specifications_md, slug)
         VALUES (
           'Heidelberg Speedmaster XL 106',
@@ -50,8 +71,8 @@ async function ensureDb() {
           '## Specifications\n\n- **Max. sheet size:** 750 x 1,060 mm\n- **Min. sheet size:** 340 x 480 mm\n- **Max. print format:** 740 x 1,050 mm\n- **Thickness:** 0.03 - 1.05 mm\n- **Max. printing speed:** 18,000 sheets/hour\n\n### Features\n- Push to Stop technology\n- Intellistart 3\n- AutoPlate Pro',
           'heidelberg-speedmaster-xl-106'
         )
-      `;
-      await sql`
+      `);
+      await getPool().query(`
         INSERT INTO machines (name, category, image_urls, short_description, specifications_md, slug)
         VALUES (
           'Bobst Novacut 106 ER',
@@ -61,7 +82,7 @@ async function ensureDb() {
           '## Specifications\n\n- **Sheet size max:** 1,060 x 760 mm\n- **Sheet size min:** 400 x 350 mm\n- **Production speed:** Up to 8,000 sheets/hour\n- **Cutting force:** 2.6 MN\n\n### Advantages\n- Seamless blanking\n- High productivity\n- Easy job changeover',
           'bobst-novacut-106-er'
         )
-      `;
+      `);
     }
     dbInitialized = true;
   } catch (e) {
@@ -153,9 +174,9 @@ app.get("/api/machines", async (req, res) => {
     const { category } = req.query;
     let machines;
     if (category && category !== "All") {
-      machines = (await sql`SELECT * FROM machines WHERE category = ${category as string}`).rows;
+      machines = (await getPool().query('SELECT * FROM machines WHERE category = $1', [category as string])).rows;
     } else {
-      machines = (await sql`SELECT * FROM machines`).rows;
+      machines = (await getPool().query('SELECT * FROM machines')).rows;
     }
     
     const formattedMachines = machines.map(m => {
@@ -181,12 +202,12 @@ app.get("/api/machines/:idOrSlug", async (req, res) => {
     let machine;
     
     if (!isNaN(Number(idOrSlug))) {
-      const resDb = await sql`SELECT * FROM machines WHERE id = ${Number(idOrSlug)}`;
+      const resDb = await getPool().query('SELECT * FROM machines WHERE id = $1', [Number(idOrSlug)]);
       machine = resDb.rows[0];
     }
     
     if (!machine) {
-      const resDb = await sql`SELECT * FROM machines WHERE slug = ${idOrSlug}`;
+      const resDb = await getPool().query('SELECT * FROM machines WHERE slug = $1', [idOrSlug]);
       machine = resDb.rows[0];
     }
 
@@ -238,11 +259,12 @@ app.post("/api/machines", authMiddleware, async (req, res) => {
   }
   
   try {
-    const result = await sql`
-      INSERT INTO machines (name, category, image_urls, short_description, specifications_md, slug)
-      VALUES (${name}, ${category}, ${JSON.stringify(image_urls)}, ${short_description}, ${specifications_md}, ${slug})
-      RETURNING id
-    `;
+    const result = await getPool().query(
+      `INSERT INTO machines (name, category, image_urls, short_description, specifications_md, slug)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id`,
+      [name, category, JSON.stringify(image_urls), short_description, specifications_md, slug]
+    );
     res.status(201).json({ id: result.rows[0].id });
   } catch (error: any) {
     if (error.message.includes('unique constraint')) {
@@ -262,12 +284,13 @@ app.put("/api/machines/:id", authMiddleware, async (req, res) => {
   }
 
   try {
-    const result = await sql`
-      UPDATE machines 
-      SET name = ${name}, category = ${category}, image_urls = ${JSON.stringify(image_urls)}, short_description = ${short_description}, specifications_md = ${specifications_md}, slug = ${slug}
-      WHERE id = ${id}
-      RETURNING id
-    `;
+    const result = await getPool().query(
+      `UPDATE machines 
+       SET name = $1, category = $2, image_urls = $3, short_description = $4, specifications_md = $5, slug = $6
+       WHERE id = $7
+       RETURNING id`,
+      [name, category, JSON.stringify(image_urls), short_description, specifications_md, slug, id]
+    );
 
     if (result.rowCount && result.rowCount > 0) {
       res.json({ success: true });
@@ -286,12 +309,12 @@ app.delete("/api/machines/:id", authMiddleware, async (req, res) => {
   await ensureDb();
   const { id } = req.params;
   try {
-    const machineRes = await sql`SELECT image_urls FROM machines WHERE id = ${id}`;
+    const machineRes = await getPool().query('SELECT image_urls FROM machines WHERE id = $1', [id]);
     if (machineRes.rowCount === 0) {
       return res.status(404).json({ error: "Machine not found" });
     }
 
-    await sql`DELETE FROM machines WHERE id = ${id}`;
+    await getPool().query('DELETE FROM machines WHERE id = $1', [id]);
 
     try {
       const urls = JSON.parse(machineRes.rows[0].image_urls);
