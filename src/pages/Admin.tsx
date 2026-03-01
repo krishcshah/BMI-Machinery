@@ -1,0 +1,732 @@
+import { useState, useEffect, useRef } from "react";
+import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock } from "lucide-react";
+
+export default function Admin() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  const [machines, setMachines] = useState<any[]>([]);
+  const [fetchingMachines, setFetchingMachines] = useState(false);
+  
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "Printing",
+    short_description: "",
+    specifications_md: "",
+    slug: "",
+  });
+  const [previews, setPreviews] = useState<{ url: string; file?: File; isExisting?: boolean }[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      setIsLoggedIn(true);
+      fetchMachines();
+    }
+  }, []);
+
+  const handleEdit = (machine: any) => {
+    setEditingId(machine.id);
+    setFormData({
+      name: machine.name,
+      category: machine.category,
+      short_description: machine.short_description,
+      specifications_md: machine.specifications_md || "",
+      slug: machine.slug || "",
+    });
+    
+    // Initialize previews with existing images
+    const existingPreviews = (machine.image_urls || []).map((url: string) => ({
+      url,
+      isExisting: true
+    }));
+    setPreviews(existingPreviews);
+    
+    // Scroll to form
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+    setMessage({ type: "", text: "" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      name: "",
+      category: "Printing",
+      short_description: "",
+      specifications_md: "",
+      slug: "",
+    });
+    setPreviews([]);
+    setMessage({ type: "", text: "" });
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newPreviews = [...previews];
+    const [draggedItem] = newPreviews.splice(draggedIndex, 1);
+    newPreviews.splice(dropIndex, 0, draggedItem);
+    setPreviews(newPreviews);
+    setDraggedIndex(null);
+  };
+
+  const fetchMachines = async () => {
+    setFetchingMachines(true);
+    try {
+      const res = await fetch("/api/machines");
+      if (res.ok) {
+        const data = await res.json();
+        setMachines(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch machines:", error);
+    } finally {
+      setFetchingMachines(false);
+    }
+  };
+
+  const deleteMachine = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this machine? This will also delete its images.")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await fetch(`/api/machines/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        setMessage({ type: "success", text: "Machine deleted successfully!" });
+        fetchMachines();
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Failed to delete machine" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while deleting." });
+    }
+  };
+
+  const refineWithAI = async () => {
+    if (!formData.name && !formData.specifications_md) {
+      setMessage({ type: "error", text: "Please enter a name or specifications to refine." });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await fetch("/api/ai/refine", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          short_description: formData.short_description,
+          specifications_md: formData.specifications_md
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "AI refinement failed");
+      }
+
+      const result = await res.json();
+      
+      if (result.refinedName) {
+        setFormData(prev => ({
+          ...prev,
+          name: result.refinedName,
+          short_description: result.refinedShortDescription || prev.short_description,
+          specifications_md: result.refinedSpecifications || prev.specifications_md,
+          slug: generateSlug(result.refinedName)
+        }));
+        setMessage({ type: "success", text: "AI refinement complete! Review the changes below." });
+      }
+    } catch (error: any) {
+      console.error("AI Refinement error:", error);
+      setMessage({ type: "error", text: error.message || "AI refinement failed. Please try again." });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("admin_token", data.token);
+        setIsLoggedIn(true);
+        setShowLoginModal(false);
+        fetchMachines();
+      } else {
+        setLoginError("Invalid Admin Key");
+      }
+    } catch (err) {
+      setLoginError("Login failed. Please try again.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_token");
+    setIsLoggedIn(false);
+  };
+
+  const categories = ["Printing", "Cutting", "Moulding", "Graphic"];
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    if (name === "name") {
+      setFormData({
+        ...formData,
+        [name]: value,
+        slug: generateSlug(value),
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const newPreviews = files.map(file => ({
+        url: URL.createObjectURL(file),
+        file,
+        isExisting: false
+      }));
+      setPreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setPreviews(prev => {
+      const item = prev[index];
+      if (!item.isExisting && item.url.startsWith('blob:')) {
+        URL.revokeObjectURL(item.url);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (previews.length === 0) {
+      setMessage({ type: "error", text: "Please upload at least one image." });
+      return;
+    }
+
+    setLoading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const token = localStorage.getItem("admin_token");
+      
+      // 1. Identify and upload new images
+      const newFilesToUpload = previews
+        .filter(p => !p.isExisting && p.file)
+        .map(p => p.file as File);
+
+      let uploadedUrls: string[] = [];
+      if (newFilesToUpload.length > 0) {
+        const uploadFormData = new FormData();
+        newFilesToUpload.forEach(file => uploadFormData.append("images", file));
+        
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: uploadFormData,
+        });
+
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json();
+          throw new Error(errorData.error || "Failed to upload images");
+        }
+
+        const data = await uploadRes.json();
+        uploadedUrls = data.urls;
+      }
+
+      // 2. Construct final image URLs array in the correct order
+      let uploadIdx = 0;
+      const finalImageUrls = previews.map(p => {
+        if (p.isExisting) return p.url;
+        return uploadedUrls[uploadIdx++];
+      });
+
+      // 3. Create or Update machine
+      const url = editingId ? `/api/machines/${editingId}` : "/api/machines";
+      const method = editingId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          image_urls: finalImageUrls
+        }),
+      });
+
+      if (res.ok) {
+        setMessage({ 
+          type: "success", 
+          text: editingId ? "Machine updated successfully!" : "Machine added successfully!" 
+        });
+        
+        if (!editingId) {
+          setFormData({
+            name: "",
+            category: "Printing",
+            short_description: "",
+            specifications_md: "",
+            slug: "",
+          });
+          setPreviews([]);
+        } else {
+          cancelEdit();
+        }
+        fetchMachines();
+      } else {
+        const data = await res.json();
+        setMessage({
+          type: "error",
+          text: data.error || "Failed to save machine",
+        });
+      }
+    } catch (error: any) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "An error occurred",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 lg:p-12 text-center">
+          <div className="bg-blue-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <Lock className="h-10 w-10 text-blue-600" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Protected Area</h1>
+          <p className="text-slate-500 mb-8">This section is restricted to BMI Machinery administrators only.</p>
+          
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+          >
+            <LogIn className="h-5 w-5" />
+            Enter Admin Key
+          </button>
+
+          {showLoginModal && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-in fade-in zoom-in duration-200">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-slate-900">Admin Authentication</h2>
+                  <button onClick={() => setShowLoginModal(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 text-left">Admin Key</label>
+                    <input
+                      type="password"
+                      required
+                      autoFocus
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all"
+                      placeholder="Enter your key"
+                    />
+                  </div>
+                  {loginError && <p className="text-red-500 text-sm font-medium">{loginError}</p>}
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    Verify Key
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-50 min-h-screen py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-3 rounded-xl">
+              {editingId ? <Edit2 className="h-8 w-8 text-blue-600" /> : <PlusCircle className="h-8 w-8 text-blue-600" />}
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                {editingId ? "Edit Machine" : "Add New Machine"}
+              </h1>
+              <p className="text-slate-600">
+                {editingId ? `Updating details for ${formData.name}` : "Enter the details to add a new machine to the catalogue."}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="text-slate-500 hover:text-slate-900 font-medium text-sm transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+
+        {message.text && (
+          <div
+            className={`mb-8 p-4 rounded-xl border ${
+              message.type === "success"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+
+        <div ref={formRef} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 lg:p-12">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-bold text-slate-700 mb-2"
+                >
+                  Machine Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors"
+                  placeholder="e.g., Heidelberg Speedmaster"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-bold text-slate-700 mb-2"
+                >
+                  Category
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  required
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="slug"
+                  className="block text-sm font-bold text-slate-700 mb-2"
+                >
+                  URL Slug (Auto-generated)
+                </label>
+                <input
+                  type="text"
+                  id="slug"
+                  name="slug"
+                  required
+                  value={formData.slug}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors"
+                  placeholder="e.g., heidelberg-speedmaster"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-4">
+                Machine Images {editingId ? "(Add More or Reorder)" : "(Upload Multiple)"}
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
+                {previews.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all group cursor-move ${draggedIndex === index ? 'border-blue-500 opacity-50' : 'border-slate-200'}`}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <img src={item.url} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <div className="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
+                      {index === 0 ? "Thumbnail" : `Image ${index + 1}`}
+                    </div>
+                  </div>
+                ))}
+                <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-400 transition-all text-slate-400 hover:text-blue-500">
+                  <ImageIcon className="h-8 w-8 mb-2" />
+                  <span className="text-xs font-bold">Add Image</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <p className="text-sm text-slate-500">
+                Upload high-quality images of the machine. You can drag and drop the images to reorder them. The first image will be used as the thumbnail.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="short_description"
+                className="block text-sm font-bold text-slate-700 mb-2"
+              >
+                Short Description
+              </label>
+              <textarea
+                id="short_description"
+                name="short_description"
+                required
+                rows={3}
+                value={formData.short_description}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors resize-none"
+                placeholder="A brief overview of the machine's capabilities..."
+              ></textarea>
+            </div>
+
+            <div>
+              <label
+                htmlFor="specifications_md"
+                className="block text-sm font-bold text-slate-700 mb-2"
+              >
+                Specifications (Markdown)
+              </label>
+              <textarea
+                id="specifications_md"
+                name="specifications_md"
+                required
+                rows={10}
+                value={formData.specifications_md}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors font-mono text-sm"
+                placeholder="## Specifications\n\n- **Max Speed:** 10,000 units/hr\n- **Power:** 50kW\n\n### Features\n- Auto-calibration\n- Touchscreen interface"
+              ></textarea>
+              <p className="mt-2 text-sm text-slate-500">
+                Use Markdown formatting for headings, lists, and bold text.
+              </p>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={refineWithAI}
+                  disabled={aiLoading || loading}
+                  className="inline-flex items-center justify-center px-6 py-4 text-base font-bold rounded-xl text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {aiLoading ? (
+                    <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-5 w-5" />
+                  )}
+                  Refine with AI
+                </button>
+                
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="inline-flex items-center justify-center px-6 py-4 text-base font-bold rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || aiLoading}
+                className="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                    {editingId ? "Updating..." : "Saving..."}
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <Save className="mr-2 h-5 w-5" />
+                    {editingId ? "Update Machine" : "Save Machine"}
+                  </span>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Machine List Section */}
+        <div className="mt-16">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Existing Machines</h2>
+            <button 
+              onClick={fetchMachines}
+              className="text-sm text-blue-600 font-medium hover:underline"
+            >
+              Refresh List
+            </button>
+          </div>
+
+          {fetchingMachines ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+            </div>
+          ) : machines.length > 0 ? (
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700">Machine</th>
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700">Category</th>
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700">Slug</th>
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {machines.map((machine) => (
+                      <tr key={machine.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                              <img 
+                                src={machine.image_urls[0]} 
+                                alt={machine.name} 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            <span className="font-bold text-slate-900">{machine.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-md">
+                            {machine.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500 font-mono">
+                          {machine.slug}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(machine)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Machine"
+                            >
+                              <Edit2 className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => deleteMachine(machine.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Machine"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-12 text-center">
+              <p className="text-slate-500">No machines found in the database.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
