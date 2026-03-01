@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock } from "lucide-react";
+import { GoogleGenAI } from "@google/genai";
 
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -137,26 +138,32 @@ export default function Admin() {
 
     setAiLoading(true);
     try {
-      const token = localStorage.getItem("admin_token");
-      const res = await fetch("/api/ai/refine", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          short_description: formData.short_description,
-          specifications_md: formData.specifications_md
-        })
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+        throw new Error("Gemini API key not configured. Please set GEMINI_API_KEY in the Secrets panel.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `You are a product copywriter for an industrial machinery company called BMI Machinery.
+        Refine the following machine details to be more professional, elaborate, and well-formatted.
+        
+        Machine Name: ${formData.name}
+        Short Description: ${formData.short_description}
+        Specifications (Markdown): ${formData.specifications_md}
+        
+        Please return a JSON object with the following fields:
+        - refinedName: Properly capitalized and formatted machine name.
+        - refinedShortDescription: A more professional and engaging short description.
+        - refinedSpecifications: Elaborated and beautified markdown specifications.
+        
+        Ensure the markdown is clean and uses professional terminology.`,
+        config: {
+          responseMimeType: "application/json"
+        }
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "AI refinement failed");
-      }
-
-      const result = await res.json();
+      const result = JSON.parse(response.text || "{}");
       
       if (result.refinedName) {
         setFormData(prev => ({

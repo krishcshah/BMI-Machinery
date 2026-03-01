@@ -5,7 +5,6 @@ import Database from "better-sqlite3";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { GoogleGenAI } from "@google/genai";
 
 // Node 18+ has fetch globally.
 const db = new Database("machines.db");
@@ -374,44 +373,6 @@ ${message}
         return res.status(400).json({ error: "A machine with this slug already exists." });
       }
       res.status(500).json({ error: "Failed to update machine: " + error.message });
-    }
-  });
-
-  app.post("/api/ai/refine", authMiddleware, async (req, res) => {
-    const { name, short_description, specifications_md } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({ error: "Gemini API key not configured on server. Please set GEMINI_API_KEY in the Secrets panel." });
-    }
-
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: `You are a product copywriter for an industrial machinery company called BMI Machinery.
-        Refine the following machine details to be more professional, elaborate, and well-formatted.
-        
-        Machine Name: ${name}
-        Short Description: ${short_description}
-        Specifications (Markdown): ${specifications_md}
-        
-        Please return a JSON object with the following fields:
-        - refinedName: Properly capitalized and formatted machine name.
-        - refinedShortDescription: A more professional and engaging short description.
-        - refinedSpecifications: Elaborated and beautified markdown specifications.
-        
-        Ensure the markdown is clean and uses professional terminology.`,
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-
-      const result = JSON.parse(response.text || "{}");
-      res.json(result);
-    } catch (error: any) {
-      console.error("AI Refinement error:", error);
-      res.status(500).json({ error: "AI refinement failed: " + error.message });
     }
   });
 
