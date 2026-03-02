@@ -43,7 +43,7 @@ export const applyPdfBranding = async (doc: jsPDF, title: string) => {
   doc.setFontSize(12);
   doc.setTextColor(100, 116, 139); // slate-500
   doc.setFont("helvetica", "normal");
-  doc.text(title, 28, 30);
+  doc.text(`${title} (bmimachinery.com)`, 28, 30);
   doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 28, 37);
   
   doc.setDrawColor(226, 232, 240); // slate-200
