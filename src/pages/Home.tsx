@@ -268,7 +268,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
-              Our Core Machine Categories
+              Our Expertise
             </h2>
             <p className="text-lg text-slate-600">
               We source, inspect, and import a wide range of premium second-hand industrial equipment tailored for the Indian manufacturing sector.
@@ -277,7 +277,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Category 1 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow">
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <Printer className="h-7 w-7 text-blue-600" />
               </div>
@@ -291,13 +291,14 @@ export default function Home() {
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Manroland presses</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> KBA printing machines</li>
               </ul>
-              <Link to="/catalogue?category=Printing" className="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center">
-                View <strong>second hand Heidelberg press</strong> inventory <ArrowRight className="ml-1 h-4 w-4" />
+              <Link to="/catalogue?category=Printing" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+                <span className="leading-snug">View <strong>second hand Heidelberg press</strong> inventory</span> 
+                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             {/* Category 2 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow">
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <Box className="h-7 w-7 text-blue-600" />
               </div>
@@ -311,13 +312,14 @@ export default function Home() {
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Folding carton machines</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Corrugation machines</li>
               </ul>
-              <Link to="/catalogue?category=Cutting" className="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center">
-                Find a <strong>used die cutting machine</strong> <ArrowRight className="ml-1 h-4 w-4" />
+              <Link to="/catalogue?category=Cutting" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+                <span className="leading-snug">Find a <strong>used die cutting machine</strong></span> 
+                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             {/* Category 3 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow">
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <Layers className="h-7 w-7 text-blue-600" />
               </div>
@@ -330,13 +332,14 @@ export default function Home() {
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Blow moulding machines</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Extrusion machines</li>
               </ul>
-              <Link to="/catalogue?category=Moulding" className="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center">
-                Browse <strong>second hand injection moulding machine</strong> <ArrowRight className="ml-1 h-4 w-4" />
+              <Link to="/catalogue?category=Moulding" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+                <span className="leading-snug">Browse <strong>second hand injection moulding machine</strong></span> 
+                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             {/* Category 4 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow">
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <BookOpen className="h-7 w-7 text-blue-600" />
               </div>
@@ -350,8 +353,9 @@ export default function Home() {
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Lamination machines</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Folding machines</li>
               </ul>
-              <Link to="/catalogue?category=Graphic" className="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center">
-                View binding & finishing equipment <ArrowRight className="ml-1 h-4 w-4" />
+              <Link to="/catalogue?category=Graphic" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+                <span className="leading-snug">View binding & finishing equipment</span> 
+                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -439,10 +443,10 @@ export default function Home() {
       </section>
 
       {/* MACHINE VERIFICATION & RISK PROTECTION */}
-      <section className="py-20 bg-blue-600 text-white">
+      <section className="py-20 bg-blue-600 text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
+            <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-extrabold mb-6">
                 Machine Verification & Risk Protection
               </h2>
@@ -493,8 +497,28 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="hidden md:flex justify-center">
-              <ShieldCheck className="h-64 w-64 text-blue-400 opacity-50" />
+            <div className="hidden md:flex relative justify-center items-center min-h-[500px]">
+              <ShieldCheck className="absolute w-[150%] h-[150%] text-white opacity-5 right-[-25%] top-1/2 -translate-y-1/2" />
+              <div className="relative z-10 w-full max-w-sm space-y-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-2xl transform translate-x-4 hover:translate-x-2 transition-transform">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="bg-emerald-400/20 p-2 rounded-full">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                    </div>
+                    <h4 className="text-white font-bold text-lg">100% Verified</h4>
+                  </div>
+                  <p className="text-blue-100 text-sm">Every machine passes a rigorous 50-point technical inspection.</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-2xl transform -translate-x-4 hover:-translate-x-2 transition-transform">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="bg-blue-400/20 p-2 rounded-full">
+                      <Globe className="h-6 w-6 text-blue-300" />
+                    </div>
+                    <h4 className="text-white font-bold text-lg">European Standards</h4>
+                  </div>
+                  <p className="text-blue-100 text-sm">Sourced directly from top-tier facilities in Germany and the EU.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -564,10 +588,29 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="relative flex overflow-x-hidden group">
+        <div className="relative flex flex-col gap-6 overflow-x-hidden group">
           <div className="animate-marquee flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
             {[...reviews, ...reviews].map((review, index) => (
-              <div key={index} className="w-[350px] shrink-0 bg-slate-800 rounded-2xl p-8 border border-slate-700 flex flex-col whitespace-normal shadow-xl">
+              <div key={`row1-${index}`} className="w-[350px] shrink-0 bg-slate-800 rounded-2xl p-8 border border-slate-700 flex flex-col whitespace-normal shadow-xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <img src={review.avatar} alt={review.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-600" />
+                  <div>
+                    <h4 className="font-bold text-lg text-white">{review.name}</h4>
+                    <p className="text-sm text-slate-400">{review.title}</p>
+                  </div>
+                </div>
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-slate-300 italic leading-relaxed">"{review.text}"</p>
+              </div>
+            ))}
+          </div>
+          <div className="animate-marquee-reverse flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
+            {[...[...reviews].reverse(), ...[...reviews].reverse()].map((review, index) => (
+              <div key={`row2-${index}`} className="w-[350px] shrink-0 bg-slate-800 rounded-2xl p-8 border border-slate-700 flex flex-col whitespace-normal shadow-xl">
                 <div className="flex items-center gap-4 mb-6">
                   <img src={review.avatar} alt={review.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-600" />
                   <div>
