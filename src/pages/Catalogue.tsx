@@ -4,7 +4,7 @@ import { Search, Filter, ArrowRight, Download, FileText, Loader2, ChevronDown } 
 import { jsPDF } from "jspdf/dist/jspdf.es.min.js";
 import autoTable from "jspdf-autotable";
 import { CONTACT_INFO } from "../constants";
-import { applyPdfBranding, applyPdfFooter } from "../utils/pdfUtils";
+import { applyPdfBranding, applyPdfFooter, writeTextWithPageBreaks } from "../utils/pdfUtils";
 
 interface Machine {
   id: number;
@@ -120,11 +120,13 @@ export default function Catalogue() {
         
         doc.setFontSize(20);
         doc.setTextColor(30, 41, 59);
-        doc.text(machine.name, 14, 55);
+        const splitTitle = doc.splitTextToSize(machine.name, 180);
+        let currentY = await writeTextWithPageBreaks(doc, splitTitle, 14, 55, 8, "Machine Details");
         
         doc.setFontSize(12);
         doc.setTextColor(37, 99, 235);
-        doc.text(`Category: ${machine.category}`, 14, 63);
+        doc.text(`Category: ${machine.category}`, 14, currentY + 5);
+        currentY += 15;
         
         // Try to add image
         if (machine.image_urls && machine.image_urls.length > 0) {
@@ -149,21 +151,36 @@ export default function Catalogue() {
             if (ctx) {
               ctx.drawImage(img, 0, 0);
               const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-              doc.addImage(dataUrl, "JPEG", 14, 70, 180, 100);
+              
+              if (currentY + 100 > doc.internal.pageSize.getHeight() - 55) {
+                doc.addPage();
+                await applyPdfBranding(doc, "Machine Details");
+                currentY = 55;
+              }
+              
+              doc.addImage(dataUrl, "JPEG", 14, currentY, 180, 100);
+              currentY += 110;
             }
           } catch (e) {
             console.error("Error adding image to PDF:", e);
           }
         }
 
+        if (currentY + 20 > doc.internal.pageSize.getHeight() - 55) {
+          doc.addPage();
+          await applyPdfBranding(doc, "Machine Details");
+          currentY = 55;
+        }
+
         doc.setFontSize(14);
         doc.setTextColor(30, 41, 59);
-        doc.text("Description", 14, 180);
+        doc.text("Description", 14, currentY);
+        currentY += 8;
         
         doc.setFontSize(11);
         doc.setTextColor(71, 85, 105); // slate-600
         const splitDescription = doc.splitTextToSize(machine.short_description, 180);
-        doc.text(splitDescription, 14, 187);
+        currentY = await writeTextWithPageBreaks(doc, splitDescription, 14, currentY, 6, "Machine Details");
 
         // Fetch full details for specifications
         try {
@@ -171,15 +188,24 @@ export default function Catalogue() {
           if (res.ok) {
             const fullData = await res.json();
             if (fullData.specifications_md) {
+              if (currentY + 20 > doc.internal.pageSize.getHeight() - 55) {
+                doc.addPage();
+                await applyPdfBranding(doc, "Machine Details");
+                currentY = 55;
+              } else {
+                currentY += 15;
+              }
+              
               doc.setFontSize(14);
               doc.setTextColor(30, 41, 59);
-              doc.text("Specifications", 14, 210);
+              doc.text("Specifications", 14, currentY);
+              currentY += 8;
               
               doc.setFontSize(10);
               doc.setTextColor(71, 85, 105);
               const specs = fullData.specifications_md.replace(/#/g, '').replace(/\*/g, '');
               const splitSpecs = doc.splitTextToSize(specs, 180);
-              doc.text(splitSpecs, 14, 217);
+              await writeTextWithPageBreaks(doc, splitSpecs, 14, currentY, 5, "Machine Details");
             }
           }
         } catch (e) {

@@ -16,7 +16,7 @@ import {
 import { jsPDF } from "jspdf/dist/jspdf.es.min.js";
 import autoTable from "jspdf-autotable";
 import { CONTACT_INFO } from "../constants";
-import { applyPdfBranding, applyPdfFooter } from "../utils/pdfUtils";
+import { applyPdfBranding, applyPdfFooter, writeTextWithPageBreaks } from "../utils/pdfUtils";
 
 interface Machine {
   id: number;
@@ -93,11 +93,13 @@ export default function MachineDetails() {
       // Title
       doc.setFontSize(24);
       doc.setTextColor(30, 41, 59);
-      doc.text(machine.name, 14, 55);
+      const splitTitle = doc.splitTextToSize(machine.name, 180);
+      let currentY = await writeTextWithPageBreaks(doc, splitTitle, 14, 55, 10, "Product Brochure");
       
       doc.setFontSize(14);
       doc.setTextColor(37, 99, 235);
-      doc.text(`Category: ${machine.category}`, 14, 65);
+      doc.text(`Category: ${machine.category}`, 14, currentY + 5);
+      currentY += 15;
 
       // Main Image
       if (machine.image_urls && machine.image_urls.length > 0) {
@@ -121,7 +123,16 @@ export default function MachineDetails() {
           if (ctx) {
             ctx.drawImage(img, 0, 0);
             const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-            doc.addImage(dataUrl, "JPEG", 14, 75, 180, 100);
+            
+            // Check if image fits on current page
+            if (currentY + 100 > doc.internal.pageSize.getHeight() - 55) {
+              doc.addPage();
+              await applyPdfBranding(doc, "Product Brochure");
+              currentY = 55;
+            }
+            
+            doc.addImage(dataUrl, "JPEG", 14, currentY, 180, 100);
+            currentY += 110;
           }
         } catch (e) {
           console.error("Error adding image to PDF:", e);
@@ -129,28 +140,41 @@ export default function MachineDetails() {
       }
 
       // Description
+      if (currentY + 20 > doc.internal.pageSize.getHeight() - 55) {
+        doc.addPage();
+        await applyPdfBranding(doc, "Product Brochure");
+        currentY = 55;
+      }
+      
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59);
-      doc.text("Overview", 14, 185);
+      doc.text("Overview", 14, currentY);
+      currentY += 8;
       
       doc.setFontSize(11);
       doc.setTextColor(71, 85, 105);
       const splitDescription = doc.splitTextToSize(machine.short_description, 180);
-      doc.text(splitDescription, 14, 192);
+      currentY = await writeTextWithPageBreaks(doc, splitDescription, 14, currentY, 6, "Product Brochure");
 
-      // Specifications on new page
-      doc.addPage();
-      await applyPdfBranding(doc, "Product Brochure");
+      // Specifications
+      if (currentY + 20 > doc.internal.pageSize.getHeight() - 55) {
+        doc.addPage();
+        await applyPdfBranding(doc, "Product Brochure");
+        currentY = 55;
+      } else {
+        currentY += 15;
+      }
       
       doc.setFontSize(18);
       doc.setTextColor(30, 41, 59);
-      doc.text("Technical Specifications", 14, 55);
+      doc.text("Technical Specifications", 14, currentY);
+      currentY += 10;
       
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105);
       const specs = machine.specifications_md.replace(/#/g, '').replace(/\*/g, '');
       const splitSpecs = doc.splitTextToSize(specs, 180);
-      doc.text(splitSpecs, 14, 65);
+      await writeTextWithPageBreaks(doc, splitSpecs, 14, currentY, 5, "Product Brochure");
 
       await applyPdfFooter(doc);
       doc.save(`${machine.name.replace(/\s+/g, '_')}_Brochure.pdf`);

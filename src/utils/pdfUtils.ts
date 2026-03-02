@@ -95,3 +95,30 @@ export const applyPdfFooter = async (doc: jsPDF) => {
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - 25, pageHeight - 5);
   }
 };
+
+export const writeTextWithPageBreaks = async (
+  doc: jsPDF,
+  text: string | string[],
+  x: number,
+  startY: number,
+  lineHeight: number,
+  title: string
+): Promise<number> => {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const bottomMargin = 55; // 45 for footer + 10 padding
+  let currentY = startY;
+
+  const lines = Array.isArray(text) ? text : [text];
+
+  for (const line of lines) {
+    if (currentY > pageHeight - bottomMargin) {
+      doc.addPage();
+      await applyPdfBranding(doc, title);
+      currentY = 55; // start below header
+    }
+    doc.text(line, x, currentY);
+    currentY += lineHeight;
+  }
+
+  return currentY;
+};
