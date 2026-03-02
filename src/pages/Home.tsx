@@ -589,8 +589,8 @@ export default function Home() {
         </div>
 
         <div className="relative flex flex-col gap-6 overflow-x-hidden group">
-          <div className="animate-marquee flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
-            {[...reviews, ...reviews].map((review, index) => (
+          <div className="animate-marquee w-max flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
+            {[...reviews, ...reviews, ...reviews, ...reviews].map((review, index) => (
               <div key={`row1-${index}`} className="w-[350px] shrink-0 bg-slate-800 rounded-2xl p-8 border border-slate-700 flex flex-col whitespace-normal shadow-xl">
                 <div className="flex items-center gap-4 mb-6">
                   <img src={review.avatar} alt={review.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-600" />
@@ -608,8 +608,8 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div className="animate-marquee-reverse flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
-            {[...[...reviews].reverse(), ...[...reviews].reverse()].map((review, index) => (
+          <div className="animate-marquee-reverse w-max flex gap-6 whitespace-nowrap group-hover:[animation-play-state:paused] px-3">
+            {[...[...reviews].reverse(), ...[...reviews].reverse(), ...[...reviews].reverse(), ...[...reviews].reverse()].map((review, index) => (
               <div key={`row2-${index}`} className="w-[350px] shrink-0 bg-slate-800 rounded-2xl p-8 border border-slate-700 flex flex-col whitespace-normal shadow-xl">
                 <div className="flex items-center gap-4 mb-6">
                   <img src={review.avatar} alt={review.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-600" />
