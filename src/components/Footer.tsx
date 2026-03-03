@@ -16,7 +16,7 @@ export default function Footer() {
             </Link>
             <p className="text-sm text-slate-400 mb-4">
               Your trusted partner for finding, buying, shipping, importing,
-              installing, and maintaining industrial machines across India.
+              installing, and maintaining used machines from Germany to India.
             </p>
           </div>
 

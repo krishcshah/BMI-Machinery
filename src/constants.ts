@@ -1,6 +1,6 @@
 export const CONTACT_INFO = {
-  phones: ["+91 98765 43210", "+91 91234 56789"],
-  emails: ["info@bmimachinery.in", "sales@bmimachinery.in"],
-  website: "www.bmimachinery.in",
+  phones: ["+91 9820134444", "+49 15211763605"],
+  emails: ["info@bmimachinery.com", "sales@bmimachinery.com"],
+  website: "www.bmimachinery.com",
   companyName: "BMI Machinery"
 };
