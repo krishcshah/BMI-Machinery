@@ -148,7 +148,7 @@ export default function Home() {
       <section className="relative bg-slate-900 text-white overflow-hidden py-20 lg:py-32">
         <div className="absolute inset-0 z-0 opacity-20">
           <img
-            src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80"
+            src="https://i.imgur.com/Bvkgiuo.jpeg"
             alt="Used German Printing & Industrial Machinery"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
@@ -241,7 +241,7 @@ export default function Home() {
             <div className="relative">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                 <img 
-                  src="https://images.unsplash.com/photo-1565514020179-026b92b84bb6?auto=format&fit=crop&q=80" 
+                  src="https://i.imgur.com/Bvkgiuo.jpeg" 
                   alt="Industrial machinery sourcing Germany" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
