@@ -211,7 +211,16 @@ export default function Admin() {
     setIsLoggedIn(false);
   };
 
-  const categories = ["Printing", "Cutting", "Moulding", "Graphic"];
+  const categories = [
+    "Printing",
+    "Packaging",
+    "Die Cutting",
+    "Binding",
+    "Finishing",
+    "Injection Moulding",
+    "Metalworking",
+    "Forklifts / Material Handling"
+  ];
 
   const generateSlug = (name: string) => {
     return name

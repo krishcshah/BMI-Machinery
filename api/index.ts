@@ -84,7 +84,7 @@ async function ensureDb() {
         INSERT INTO machines (name, category, image_urls, short_description, specifications_md, slug)
         VALUES (
           'Bobst Novacut 106 ER',
-          'Cutting',
+          'Die Cutting',
           '["https://picsum.photos/seed/bobst/800/600"]',
           'Die-cutter with in-line blanking, delivering perfectly stacked blanks.',
           '## Specifications\n\n- **Sheet size max:** 1,060 x 760 mm\n- **Sheet size min:** 400 x 350 mm\n- **Production speed:** Up to 8,000 sheets/hour\n- **Cutting force:** 2.6 MN\n\n### Advantages\n- Seamless blanking\n- High productivity\n- Easy job changeover',
@@ -92,6 +92,24 @@ async function ensureDb() {
         )
       `);
     }
+
+    // Migrate old categories to new ones
+    await getPool().query(`
+      UPDATE machines 
+      SET category = CASE 
+        WHEN category = 'Printing Machines' THEN 'Printing'
+        WHEN category = 'Cutting' THEN 'Die Cutting'
+        WHEN category = 'Moulding' THEN 'Injection Moulding'
+        WHEN category = 'Graphic' THEN 'Finishing'
+        WHEN category = 'Packaging Machines' THEN 'Packaging'
+        WHEN category = 'Die Cutting Machines' THEN 'Die Cutting'
+        WHEN category = 'Binding Machines' THEN 'Binding'
+        WHEN category = 'Finishing Machines' THEN 'Finishing'
+        WHEN category = 'Injection Moulding Machines' THEN 'Injection Moulding'
+        WHEN category = 'Metalworking Machines' THEN 'Metalworking'
+        ELSE category
+      END
+    `);
     dbInitialized = true;
   } catch (e) {
     console.error("DB Init error:", e);
@@ -266,9 +284,9 @@ app.get("/api/machines", async (req, res) => {
     const { category } = req.query;
     let machines;
     if (category && category !== "All") {
-      machines = (await getPool().query('SELECT * FROM machines WHERE category = $1', [category as string])).rows;
+      machines = (await getPool().query('SELECT * FROM machines WHERE category = $1 ORDER BY id DESC', [category as string])).rows;
     } else {
-      machines = (await getPool().query('SELECT * FROM machines')).rows;
+      machines = (await getPool().query('SELECT * FROM machines ORDER BY id DESC')).rows;
     }
     
     const formattedMachines = machines.map(m => {

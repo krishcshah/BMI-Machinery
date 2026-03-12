@@ -50,7 +50,7 @@ export const applyPdfBranding = async (doc: jsPDF, title: string) => {
   doc.line(14, 42, 196, 42);
 };
 
-export const applyPdfFooter = async (doc: jsPDF) => {
+export const applyPdfFooter = async (doc: jsPDF, machineName?: string) => {
   const pageCount = (doc as any).internal.getNumberOfPages();
   
   const phoneDataUrl = await svgToDataUrl(phoneSvg);
@@ -76,7 +76,8 @@ export const applyPdfFooter = async (doc: jsPDF) => {
     doc.text("Call Us:", 28, pageHeight - 34);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`${CONTACT_INFO.phones[0]}  |  ${CONTACT_INFO.phones[1]}`, 28, pageHeight - 28);
+    doc.text(CONTACT_INFO.phones[0], 28, pageHeight - 28);
+    doc.text(CONTACT_INFO.phones[1], 28, pageHeight - 23);
     
     // Email Section
     if (mailDataUrl) {
@@ -87,7 +88,10 @@ export const applyPdfFooter = async (doc: jsPDF) => {
     doc.text("Email Us:", pageWidth / 2 + 8, pageHeight - 34);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`${CONTACT_INFO.emails[0]}  |  ${CONTACT_INFO.emails[1]}`, pageWidth / 2 + 8, pageHeight - 28);
+    
+    const subject = machineName ? `?subject=Inquiry%20about%20${encodeURIComponent(machineName)}` : '?subject=Inquiry%20from%20Catalogue';
+    doc.textWithLink(CONTACT_INFO.emails[0], pageWidth / 2 + 8, pageHeight - 28, { url: `mailto:${CONTACT_INFO.emails[0]}${subject}` });
+    doc.textWithLink(CONTACT_INFO.emails[1], pageWidth / 2 + 8, pageHeight - 23, { url: `mailto:${CONTACT_INFO.emails[1]}${subject}` });
     
     // Page Number
     doc.setFontSize(9);

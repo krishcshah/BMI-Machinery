@@ -55,31 +55,63 @@ export default function Footer() {
                   to="/catalogue?category=Printing"
                   className="hover:text-blue-400 transition-colors"
                 >
-                  Printing Machines
+                  Printing
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/catalogue?category=Cutting"
+                  to="/catalogue?category=Packaging"
                   className="hover:text-blue-400 transition-colors"
                 >
-                  Cutting Machines
+                  Packaging
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/catalogue?category=Moulding"
+                  to="/catalogue?category=Die+Cutting"
                   className="hover:text-blue-400 transition-colors"
                 >
-                  Moulding Machines
+                  Die Cutting
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/catalogue?category=Graphic"
+                  to="/catalogue?category=Binding"
                   className="hover:text-blue-400 transition-colors"
                 >
-                  Graphic Machines
+                  Binding
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalogue?category=Finishing"
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  Finishing
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalogue?category=Injection+Moulding"
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  Injection Moulding
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalogue?category=Metalworking"
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  Metalworking
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalogue?category=Forklifts+%2F+Material+Handling"
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  Forklifts / Material Handling
                 </Link>
               </li>
             </ul>

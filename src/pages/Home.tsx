@@ -281,7 +281,7 @@ export default function Home() {
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <Printer className="h-7 w-7 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">1. Used Printing Machines in India</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">1. Used Printing Machines from Germany to India</h3>
               <p className="text-slate-600 mb-4 text-sm leading-relaxed">
                 Upgrade your press room with a high-quality <strong>used offset printing machine India</strong> trusts. We source premium <strong>refurbished printing machines</strong> directly from European print houses.
               </p>
@@ -302,7 +302,7 @@ export default function Home() {
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <Box className="h-7 w-7 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">2. Used Packaging & Cutting Machines</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">2. Used Packaging & Die Cutting Machines</h3>
               <p className="text-slate-600 mb-4 text-sm leading-relaxed">
                 Enhance your packaging capabilities with reliable <strong>used packaging machinery India</strong>. We help you <strong>import Bobst machine India</strong> safely and efficiently.
               </p>
@@ -312,7 +312,7 @@ export default function Home() {
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Folding carton machines</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Corrugation machines</li>
               </ul>
-              <Link to="/catalogue?category=Cutting" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+              <Link to="/catalogue?category=Die+Cutting" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
                 <span className="leading-snug">Find a <strong>used die cutting machine</strong></span> 
                 <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -321,29 +321,9 @@ export default function Home() {
             {/* Category 3 */}
             <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
               <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                <Layers className="h-7 w-7 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">3. Used Moulding & Plastic Machines</h3>
-              <p className="text-slate-600 mb-4 text-sm leading-relaxed">
-                Scale your plastic manufacturing with top-tier <strong>used moulding machines India</strong>. We make it easy to <strong>import plastic machinery Germany</strong> with full technical validation.
-              </p>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Injection moulding machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Blow moulding machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Extrusion machines</li>
-              </ul>
-              <Link to="/catalogue?category=Moulding" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
-                <span className="leading-snug">Browse <strong>second hand injection moulding machine</strong></span> 
-                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-
-            {/* Category 4 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
-              <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                 <BookOpen className="h-7 w-7 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">4. Used Binding & Finishing Machines</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">3. Used Binding & Finishing Machines</h3>
               <p className="text-slate-600 mb-4 text-sm leading-relaxed">
                 Complete your post-press setup with robust <strong>used book binding machines</strong> and a reliable <strong>used lamination machine India</strong>.
               </p>
@@ -353,8 +333,28 @@ export default function Home() {
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Lamination machines</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Folding machines</li>
               </ul>
-              <Link to="/catalogue?category=Graphic" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+              <Link to="/catalogue?category=Binding" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
                 <span className="leading-snug">View binding & finishing equipment</span> 
+                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            {/* Category 4 */}
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
+              <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                <Factory className="h-7 w-7 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">4. Other Industrial Machinery</h3>
+              <p className="text-slate-600 mb-4 text-sm leading-relaxed">
+                Scale your manufacturing with top-tier <strong>used industrial machines India</strong>. We make it easy to <strong>import machinery from Germany</strong> with full technical validation.
+              </p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Injection Moulding Machines</li>
+                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Metalworking Machines</li>
+                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Forklifts / Material Handling</li>
+              </ul>
+              <Link to="/catalogue" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
+                <span className="leading-snug">Browse <strong>other industrial machinery</strong></span> 
                 <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>

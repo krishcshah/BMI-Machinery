@@ -176,7 +176,7 @@ export default function MachineDetails() {
       const splitSpecs = doc.splitTextToSize(specs, 180);
       await writeTextWithPageBreaks(doc, splitSpecs, 14, currentY, 5, "Product Brochure");
 
-      await applyPdfFooter(doc);
+      await applyPdfFooter(doc, machine.name);
       doc.save(`${machine.name.replace(/\s+/g, '_')}_Brochure.pdf`);
     } catch (error) {
       console.error("Brochure generation failed:", error);

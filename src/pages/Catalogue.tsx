@@ -27,7 +27,17 @@ export default function Catalogue() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const categoryFilter = searchParams.get("category") || "All";
-  const categories = ["All", "Printing", "Cutting", "Moulding", "Graphic"];
+  const categories = [
+    "All",
+    "Printing",
+    "Packaging",
+    "Die Cutting",
+    "Binding",
+    "Finishing",
+    "Injection Moulding",
+    "Metalworking",
+    "Forklifts / Material Handling"
+  ];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
