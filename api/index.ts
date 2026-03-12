@@ -218,7 +218,38 @@ ${message}
         `, // html body
       };
 
-      await transporter.sendMail(mailOptions);
+      const userMailOptions = {
+        from: `"BMI Machinery" <${smtpUser}>`, // sender address
+        to: email, // user's email
+        subject: `Thank you for contacting BMI Machinery`, // Subject line
+        text: `
+Hi ${name},
+
+Thank you for reaching out to BMI Machinery. We have received your message and our team will get back to you within 48 hours.
+
+Here is a copy of your message:
+--------------------------------------------------
+${message}
+--------------------------------------------------
+
+Best regards,
+The BMI Machinery Team
+        `, // plain text body
+        html: `
+<p>Hi ${name},</p>
+<p>Thank you for reaching out to BMI Machinery. We have received your message and our team will get back to you within 48 hours.</p>
+<p>Here is a copy of your message:</p>
+<hr/>
+<p>${message.replace(/\n/g, '<br/>')}</p>
+<hr/>
+<p>Best regards,<br/>The BMI Machinery Team</p>
+        `, // html body
+      };
+
+      await Promise.all([
+        transporter.sendMail(mailOptions),
+        transporter.sendMail(userMailOptions)
+      ]);
     } catch (error) {
       console.error("Failed to send Email notification:", error);
     }
