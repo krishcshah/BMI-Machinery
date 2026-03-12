@@ -78,8 +78,8 @@ export default function Home() {
       answer: "Absolutely. Our pan-India installation & service support team handles the complete unloading, installation, and commissioning of your used offset printing machine or industrial equipment at your facility."
     },
     {
-      question: "Do you offer warranty?",
-      answer: "Yes, we provide a performance guarantee and limited warranty on refurbished industrial machinery. We ensure the machine operates exactly as per the technical evaluation report provided during the inspection in Germany."
+      question: "Do you offer after sales support?",
+      answer: "Yes, we provide one year after sales support on refurbished industrial machinery. We ensure the machine operates exactly as per the technical evaluation report provided during the inspection in Germany."
     },
     {
       question: "How do you inspect machines before purchase?",

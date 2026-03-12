@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
+
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -26,6 +28,28 @@ export default function Admin() {
   const [message, setMessage] = useState({ type: "", text: "" });
 
   const formRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("admin_token");
+    setIsLoggedIn(false);
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+  }, []);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    if (isLoggedIn) {
+      inactivityTimerRef.current = setTimeout(() => {
+        handleLogout();
+        // Optional: You could set a message here to let them know they were logged out due to inactivity
+        // setMessage({ type: "error", text: "You have been logged out due to inactivity." });
+      }, INACTIVITY_TIMEOUT);
+    }
+  }, [isLoggedIn, handleLogout]);
 
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
@@ -34,6 +58,32 @@ export default function Admin() {
       fetchMachines();
     }
   }, []);
+
+  // Set up event listeners for user activity
+  useEffect(() => {
+    if (isLoggedIn) {
+      resetInactivityTimer();
+
+      const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+      
+      const handleActivity = () => {
+        resetInactivityTimer();
+      };
+
+      events.forEach(event => {
+        document.addEventListener(event, handleActivity);
+      });
+
+      return () => {
+        events.forEach(event => {
+          document.removeEventListener(event, handleActivity);
+        });
+        if (inactivityTimerRef.current) {
+          clearTimeout(inactivityTimerRef.current);
+        }
+      };
+    }
+  }, [isLoggedIn, resetInactivityTimer]);
 
   const handleEdit = (machine: any) => {
     setEditingId(machine.id);
@@ -204,11 +254,6 @@ export default function Admin() {
     } catch (err) {
       setLoginError("Login failed. Please try again.");
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    setIsLoggedIn(false);
   };
 
   const categories = [

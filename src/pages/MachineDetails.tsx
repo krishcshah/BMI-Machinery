@@ -309,7 +309,7 @@ export default function MachineDetails() {
                 <div className="flex items-center gap-3 text-slate-700">
                   <ShieldCheck className="h-5 w-5 text-blue-500 shrink-0" />
                   <span className="font-medium">
-                    1 Year Comprehensive Warranty
+                    One Year After Sales Support
                   </span>
                 </div>
               </div>
