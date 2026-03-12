@@ -108,10 +108,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/catalogue?category=Forklifts+%2F+Material+Handling"
+                  to="/catalogue?category=Forklifts+%2F+Handling"
                   className="hover:text-blue-400 transition-colors"
                 >
-                  Forklifts / Material Handling
+                  Forklifts / Handling
                 </Link>
               </li>
             </ul>

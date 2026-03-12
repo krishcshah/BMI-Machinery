@@ -36,7 +36,7 @@ export default function Catalogue() {
     "Finishing",
     "Injection Moulding",
     "Metalworking",
-    "Forklifts / Material Handling"
+    "Forklifts / Handling"
   ];
 
   useEffect(() => {

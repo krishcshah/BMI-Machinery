@@ -29,7 +29,7 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = "Used German Printing & Industrial Machinery Importer India | BMI";
+    document.title = "High-Quality Used Printing & Industrial Machinery | BMI";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute(
@@ -149,7 +149,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0 opacity-20">
           <img
             src="https://i.imgur.com/Bvkgiuo.jpeg"
-            alt="Used German Printing & Industrial Machinery"
+            alt="High-Quality Used Printing & Industrial Machinery"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
@@ -159,10 +159,10 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6">
-              Used German Printing & Industrial Machinery for Indian Manufacturers
+              High-Quality Used Printing, Binding & Industrial Machinery from Europe
             </h1>
             <p className="text-lg md:text-xl text-slate-300 mb-10 leading-relaxed font-medium">
-              Import High-Quality Pre-Owned European Machines with Complete End-to-End Support. Reduce capital expenditure without compromising on precision engineering.
+              Import reliable pre-owned printing, binding, packaging, and industrial machines from Germany and across Europe. We provide complete end-to-end support so you can reduce capital costs without compromising on precision engineering.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
@@ -176,7 +176,7 @@ export default function Home() {
                 to="/contact"
                 className="inline-flex justify-center items-center px-8 py-4 text-base font-bold rounded-xl text-slate-900 bg-white hover:bg-slate-50 transition-colors shadow-lg"
               >
-                Get a Free Import Consultation
+                Send Inquiry
               </Link>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-blue-500/50">
             <div className="px-4">
-              <div className="text-3xl font-extrabold mb-1">15+</div>
+              <div className="text-3xl font-extrabold mb-1">20+</div>
               <div className="text-sm font-medium text-blue-100 uppercase tracking-wider">Years Experience</div>
             </div>
             <div className="px-4">
@@ -351,7 +351,7 @@ export default function Home() {
               <ul className="space-y-2 mb-6">
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Injection Moulding Machines</li>
                 <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Metalworking Machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Forklifts / Material Handling</li>
+                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Forklifts / Handling</li>
               </ul>
               <Link to="/catalogue" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
                 <span className="leading-snug">Browse <strong>other industrial machinery</strong></span> 

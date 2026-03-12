@@ -219,7 +219,7 @@ export default function Admin() {
     "Finishing",
     "Injection Moulding",
     "Metalworking",
-    "Forklifts / Material Handling"
+    "Forklifts / Handling"
   ];
 
   const generateSlug = (name: string) => {
