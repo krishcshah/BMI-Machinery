@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import { Pool } from "pg";
 import { put, del } from "@vercel/blob";
+import nodemailer from "nodemailer";
 
 const app = express();
 app.use(express.json());
@@ -168,39 +169,61 @@ app.post("/api/contact", async (req, res) => {
     }
   }
 
-  const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-  const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
 
-  if (telegramToken && telegramChatId) {
-    const text = `
-🆕 *New Contact Form Submission*
-
-👤 *Name:* ${name}
-📧 *Email:* ${email}
-📞 *Phone:* ${phone}
-🏢 *Company:* ${company || "N/A"}
-
-📝 *Message:*
-${message}
-    `;
-
+  if (smtpHost && smtpPort && smtpUser && smtpPass) {
     try {
-      const response = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: telegramChatId,
-          text: text,
-          parse_mode: "Markdown",
-        }),
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: parseInt(smtpPort),
+        secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+        tls: {
+          // Do not fail on invalid certs (common with shared hosting like Namecheap)
+          rejectUnauthorized: false
+        }
       });
 
-      if (!response.ok) {
-        console.error("Telegram API error:", await response.text());
-      }
+      const mailOptions = {
+        from: `"BMI Machinery Notifications" <${smtpUser}>`, // sender address
+        to: "chetan@bmimachinery.com, info@bmimachinery.com", // receivers
+        replyTo: email,
+        subject: `New Contact Form Submission from ${name}`, // Subject line
+        text: `
+New Contact Form Submission
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone}
+Company: ${company || "N/A"}
+
+Message:
+${message}
+        `, // plain text body
+        html: `
+<h2>New Contact Form Submission</h2>
+<p><strong>Name:</strong> ${name}</p>
+<p><strong>Email:</strong> ${email}</p>
+<p><strong>Phone:</strong> ${phone}</p>
+<p><strong>Company:</strong> ${company || "N/A"}</p>
+<br/>
+<p><strong>Message:</strong></p>
+<p>${message.replace(/\n/g, '<br/>')}</p>
+        `, // html body
+      };
+
+      await transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error("Failed to send Telegram notification:", error);
+      console.error("Failed to send Email notification:", error);
     }
+  } else {
+    console.warn("SMTP credentials are not fully configured. Email notification skipped.");
   }
 
   res.json({ success: true });
