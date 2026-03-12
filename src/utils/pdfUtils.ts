@@ -76,7 +76,7 @@ export const applyPdfFooter = async (doc: jsPDF, machineName?: string) => {
     doc.text("Call Us:", 28, pageHeight - 34);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(CONTACT_INFO.phones[0], 28, pageHeight - 28);
+    doc.textWithLink(CONTACT_INFO.phones[0], 28, pageHeight - 28, { url: CONTACT_INFO.whatsappLink });
     doc.text(CONTACT_INFO.phones[1], 28, pageHeight - 23);
     
     // Email Section

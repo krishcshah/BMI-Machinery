@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import WhatsAppWidget from "./components/WhatsAppWidget";
 import Home from "./pages/Home";
 import Catalogue from "./pages/Catalogue";
 import MachineDetails from "./pages/MachineDetails";
@@ -40,6 +41,7 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <WhatsAppWidget />
       </div>
       <Analytics />
       <SpeedInsights />

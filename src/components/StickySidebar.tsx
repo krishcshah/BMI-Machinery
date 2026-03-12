@@ -27,7 +27,7 @@ export default function StickySidebar() {
           </Link>
           
           <div className="mt-6 pt-6 border-t border-slate-800 space-y-3">
-            <a href={`tel:${CONTACT_INFO.phones[0].split(' ')[0]}`} className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors">
+            <a href={CONTACT_INFO.whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors">
               <div className="bg-slate-800 p-2 rounded-lg">
                 <Phone className="w-4 h-4 text-blue-400" />
               </div>

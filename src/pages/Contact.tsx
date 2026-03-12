@@ -119,7 +119,9 @@ export default function Contact() {
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Phone</h4>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      {CONTACT_INFO.phones[0]}<br />
+                      <a href={CONTACT_INFO.whatsappLink} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                        {CONTACT_INFO.phones[0]}
+                      </a><br />
                       {CONTACT_INFO.phones[1]}
                     </p>
                   </div>
