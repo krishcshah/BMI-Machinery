@@ -225,7 +225,7 @@ ${message}
         text: `
 Hi ${name},
 
-Thank you for reaching out to BMI Machinery. We have received your message and our team will get back to you within 48 hours.
+Thank you for reaching out to BMI Machinery. We have received your message and somwone from our team will get back to you within 48 hours.
 
 Here is a copy of your message:
 --------------------------------------------------
