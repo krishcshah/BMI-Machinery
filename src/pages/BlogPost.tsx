@@ -61,16 +61,16 @@ export default function BlogPost() {
           <article className="lg:w-2/3 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             
             {/* Hero Image */}
-            <div className="aspect-[21/9] w-full overflow-hidden relative">
+            <div className="min-h-[350px] md:min-h-[450px] w-full relative flex flex-col justify-end overflow-hidden">
               <img
                 src={post.imageUrl}
                 alt={post.title}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <span className="inline-block bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-wider">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+              <div className="relative z-10 p-6 md:p-12">
+                <span className="inline-block bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
                   {post.category}
                 </span>
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight drop-shadow-md">
@@ -79,7 +79,7 @@ export default function BlogPost() {
               </div>
             </div>
 
-            <div className="p-8 md:p-12">
+            <div className="p-6 md:p-12 pt-6 md:pt-8">
               {/* Meta Info */}
               <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 mb-10 pb-6 border-b border-slate-100">
                 <span className="flex items-center gap-2 font-medium">
