@@ -33,11 +33,23 @@ export default function StickySidebar() {
               </div>
               {CONTACT_INFO.phones[0]}
             </a>
+            <a href="tel:+4915679748887" className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors">
+              <div className="bg-slate-800 p-2 rounded-lg">
+                <Phone className="w-4 h-4 text-blue-400" />
+              </div>
+              {CONTACT_INFO.phones[1]}
+            </a>
             <a href={`mailto:${CONTACT_INFO.emails[0]}`} className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors">
               <div className="bg-slate-800 p-2 rounded-lg">
                 <Mail className="w-4 h-4 text-blue-400" />
               </div>
               {CONTACT_INFO.emails[0]}
+            </a>
+            <a href={`mailto:${CONTACT_INFO.emails[1]}`} className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors">
+              <div className="bg-slate-800 p-2 rounded-lg">
+                <Mail className="w-4 h-4 text-blue-400" />
+              </div>
+              {CONTACT_INFO.emails[1]}
             </a>
           </div>
         </div>

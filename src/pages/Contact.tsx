@@ -122,7 +122,9 @@ export default function Contact() {
                       <a href={CONTACT_INFO.whatsappLink} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
                         {CONTACT_INFO.phones[0]}
                       </a><br />
-                      {CONTACT_INFO.phones[1]}
+                      <a href="tel:+4915679748887" className="hover:text-blue-600 transition-colors">
+                        {CONTACT_INFO.phones[1]}
+                      </a>
                     </p>
                   </div>
                 </div>
@@ -134,8 +136,12 @@ export default function Contact() {
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Email</h4>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      {CONTACT_INFO.emails[0]}<br />
-                      {CONTACT_INFO.emails[1]}
+                      <a href={`mailto:${CONTACT_INFO.emails[0]}`} className="hover:text-blue-600 transition-colors">
+                        {CONTACT_INFO.emails[0]}
+                      </a><br />
+                      <a href={`mailto:${CONTACT_INFO.emails[1]}`} className="hover:text-blue-600 transition-colors">
+                        {CONTACT_INFO.emails[1]}
+                      </a>
                     </p>
                   </div>
                 </div>

@@ -136,15 +136,21 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-blue-500 shrink-0" />
-                <span>{CONTACT_INFO.phones[1]}</span>
+                <a href="tel:+4915679748887" className="hover:text-blue-400 transition-colors">
+                  {CONTACT_INFO.phones[1]}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-blue-500 shrink-0" />
-                <span>{CONTACT_INFO.emails[0]}</span>
+                <a href={`mailto:${CONTACT_INFO.emails[0]}`} className="hover:text-blue-400 transition-colors">
+                  {CONTACT_INFO.emails[0]}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-blue-500 shrink-0" />
-                <span>{CONTACT_INFO.emails[1]}</span>
+                <a href={`mailto:${CONTACT_INFO.emails[1]}`} className="hover:text-blue-400 transition-colors">
+                  {CONTACT_INFO.emails[1]}
+                </a>
               </li>
             </ul>
           </div>
