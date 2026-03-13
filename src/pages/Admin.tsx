@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
 
-const INACTIVITY_TIMEOUT = 30 * 1000; // 30 seconds in milliseconds
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
