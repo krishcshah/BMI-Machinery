@@ -32,6 +32,7 @@ export default function Admin() {
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_last_activity");
     setIsLoggedIn(false);
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
@@ -45,18 +46,24 @@ export default function Admin() {
     if (isLoggedIn) {
       inactivityTimerRef.current = setTimeout(() => {
         handleLogout();
-        // Optional: You could set a message here to let them know they were logged out due to inactivity
-        // setMessage({ type: "error", text: "You have been logged out due to inactivity." });
       }, INACTIVITY_TIMEOUT);
     }
   }, [isLoggedIn, handleLogout]);
 
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
+    const lastActivity = localStorage.getItem("admin_last_activity");
+    
     if (token) {
-      setIsLoggedIn(true);
-      fetchMachines();
+      if (lastActivity && Date.now() - parseInt(lastActivity, 10) > INACTIVITY_TIMEOUT) {
+        handleLogout();
+      } else {
+        setIsLoggedIn(true);
+        fetchMachines();
+        localStorage.setItem("admin_last_activity", Date.now().toString());
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Set up event listeners for user activity
@@ -64,26 +71,41 @@ export default function Admin() {
     if (isLoggedIn) {
       resetInactivityTimer();
 
-      const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-      
+      let lastUpdate = Date.now();
       const handleActivity = () => {
         resetInactivityTimer();
+        const now = Date.now();
+        if (now - lastUpdate > 60000) { // Update localStorage at most once a minute
+          localStorage.setItem("admin_last_activity", now.toString());
+          lastUpdate = now;
+        }
       };
 
+      const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+      
       events.forEach(event => {
         document.addEventListener(event, handleActivity);
       });
+
+      // Also listen for storage events to sync logout across tabs
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === "admin_token" && !e.newValue) {
+          handleLogout();
+        }
+      };
+      window.addEventListener("storage", handleStorage);
 
       return () => {
         events.forEach(event => {
           document.removeEventListener(event, handleActivity);
         });
+        window.removeEventListener("storage", handleStorage);
         if (inactivityTimerRef.current) {
           clearTimeout(inactivityTimerRef.current);
         }
       };
     }
-  }, [isLoggedIn, resetInactivityTimer]);
+  }, [isLoggedIn, resetInactivityTimer, handleLogout]);
 
   const handleEdit = (machine: any) => {
     setEditingId(machine.id);
@@ -245,6 +267,7 @@ export default function Admin() {
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem("admin_token", data.token);
+        localStorage.setItem("admin_last_activity", Date.now().toString());
         setIsLoggedIn(true);
         setShowLoginModal(false);
         fetchMachines();
