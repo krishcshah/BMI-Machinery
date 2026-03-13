@@ -207,7 +207,7 @@ app.post("/api/auth/login", async (req, res) => {
 
         await transporter.sendMail({
           from: `"BMI Machinery Security" <${smtpUser}>`,
-          to: "bmimachinery@gmail.com, chetan@bmimachinery.com, krish@bmimachinery.com",
+          to: "bmimachinery@gmail.com, chetan@bmimachinery.com, krish@bmimachinery.com, notifications@bmimachinery.com",
           subject: "Admin Login OTP - BMI Machinery",
           text: `Your OTP for admin login is: ${otp}\n\nThis code will expire in 10 minutes.\n\nRequested At: ${timestamp}\nIP Address: ${ip}\nEstimated Location: ${location}`,
           html: `
@@ -315,7 +315,7 @@ app.post("/api/contact", async (req, res) => {
 
       const mailOptions = {
         from: `"BMI Machinery Notifications" <${smtpUser}>`, // sender address
-        to: "chetan@bmimachinery.com, info@bmimachinery.com, bmimachinery@gmail.com", // receivers
+        to: "chetan@bmimachinery.com, info@bmimachinery.com, bmimachinery@gmail.com, krish@bmimachinery.com", // receivers
         replyTo: email,
         subject: `New Contact Form Submission from ${name}`, // Subject line
         text: `
