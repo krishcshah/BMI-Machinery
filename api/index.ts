@@ -147,12 +147,117 @@ app.get("/api/debug-db", async (req, res) => {
   }
 });
 
-app.post("/api/auth/login", (req, res) => {
+let currentOtp: string | null = null;
+let otpExpiry: number | null = null;
+let otpAttempts = 0;
+let lastOtpAttempt = 0;
+let otpBlockUntil = 0;
+
+app.post("/api/auth/login", async (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_SECRET_KEY) {
-    res.json({ success: true, token: ADMIN_SECRET_KEY });
+    const now = Date.now();
+    
+    if (now < otpBlockUntil) {
+      const remainingMins = Math.ceil((otpBlockUntil - now) / 60000);
+      return res.status(429).json({ error: `Too many attempts. Please try again in ${remainingMins} minutes.` });
+    }
+    
+    if (now - lastOtpAttempt < 30000 && otpAttempts > 0) {
+      return res.status(429).json({ error: "Please wait 30 seconds before requesting another OTP." });
+    }
+
+    otpAttempts++;
+    lastOtpAttempt = now;
+
+    if (otpAttempts >= 10) {
+      otpBlockUntil = now + 10 * 60 * 1000; // 10 minutes
+      otpAttempts = 0; // reset for after the block
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    currentOtp = otp;
+    otpExpiry = now + 10 * 60 * 1000; // 10 minutes
+
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (smtpHost && smtpPort && smtpUser && smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: parseInt(smtpPort),
+          secure: parseInt(smtpPort) === 465,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown IP';
+        const city = req.headers['x-vercel-ip-city'] || 'Unknown City';
+        const country = req.headers['x-vercel-ip-country'] || 'Unknown Country';
+        const location = city !== 'Unknown City' ? `${city}, ${country}` : 'Unknown Location';
+        const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeZoneName: 'short' });
+
+        await transporter.sendMail({
+          from: `"BMI Machinery Security" <${smtpUser}>`,
+          to: "bmimachinery@gmail.com, chetan@bmimachinery.com, krish@bmimachinery.com",
+          subject: "Admin Login OTP - BMI Machinery",
+          text: `Your OTP for admin login is: ${otp}\n\nThis code will expire in 10 minutes.\n\nRequested At: ${timestamp}\nIP Address: ${ip}\nEstimated Location: ${location}`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+              <h2 style="color: #1e40af; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Admin Login OTP</h2>
+              <p style="font-size: 16px;">Your one-time password for BMI Machinery admin access is:</p>
+              <div style="background-color: #f3f4f6; padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0;">
+                <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1d4ed8;">${otp}</span>
+              </div>
+              <p style="color: #4b5563; font-size: 14px;">This code will expire in 10 minutes.</p>
+              
+              <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+                <p style="margin: 4px 0;"><strong>Requested At:</strong> ${timestamp}</p>
+                <p style="margin: 4px 0;"><strong>IP Address:</strong> ${ip}</p>
+                <p style="margin: 4px 0;"><strong>Estimated Location:</strong> ${location}</p>
+              </div>
+            </div>
+          `,
+        });
+      } catch (error) {
+        console.error("Failed to send OTP email:", error);
+        return res.status(500).json({ error: "Failed to send OTP email" });
+      }
+    } else {
+      console.warn("SMTP credentials are not fully configured. OTP email skipped, logging in directly.");
+      return res.json({ success: true, token: ADMIN_SECRET_KEY });
+    }
+
+    res.json({ success: true, requireOtp: true });
   } else {
     res.status(401).json({ error: "Invalid Admin Key" });
+  }
+});
+
+app.post("/api/auth/verify-otp", (req, res) => {
+  const { otp } = req.body;
+  if (!currentOtp || !otpExpiry) {
+    return res.status(400).json({ error: "No OTP requested or OTP expired" });
+  }
+  if (Date.now() > otpExpiry) {
+    currentOtp = null;
+    otpExpiry = null;
+    return res.status(400).json({ error: "OTP has expired" });
+  }
+  if (otp === currentOtp) {
+    currentOtp = null;
+    otpExpiry = null;
+    res.json({ success: true, token: ADMIN_SECRET_KEY });
+  } else {
+    res.status(401).json({ error: "Invalid OTP" });
   }
 });
 
@@ -210,7 +315,7 @@ app.post("/api/contact", async (req, res) => {
 
       const mailOptions = {
         from: `"BMI Machinery Notifications" <${smtpUser}>`, // sender address
-        to: "chetan@bmimachinery.com, info@bmimachinery.com", // receivers
+        to: "chetan@bmimachinery.com, info@bmimachinery.com, bmimachinery@gmail.com", // receivers
         replyTo: email,
         subject: `New Contact Form Submission from ${name}`, // Subject line
         text: `

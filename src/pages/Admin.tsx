@@ -2,13 +2,26 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
 
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+const INACTIVITY_TIMEOUT = 30 * 1000; // 30 seconds in milliseconds
 
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [sessionTimedOut, setSessionTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
   
   const [machines, setMachines] = useState<any[]>([]);
   const [fetchingMachines, setFetchingMachines] = useState(false);
@@ -39,16 +52,26 @@ export default function Admin() {
     }
   }, []);
 
+  const handleTimeout = useCallback(() => {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_last_activity");
+    setIsLoggedIn(false);
+    setSessionTimedOut(true);
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+  }, []);
+
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
     }
     if (isLoggedIn) {
       inactivityTimerRef.current = setTimeout(() => {
-        handleLogout();
+        handleTimeout();
       }, INACTIVITY_TIMEOUT);
     }
-  }, [isLoggedIn, handleLogout]);
+  }, [isLoggedIn, handleTimeout]);
 
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
@@ -56,7 +79,7 @@ export default function Admin() {
     
     if (token) {
       if (lastActivity && Date.now() - parseInt(lastActivity, 10) > INACTIVITY_TIMEOUT) {
-        handleLogout();
+        handleTimeout();
       } else {
         setIsLoggedIn(true);
         fetchMachines();
@@ -258,6 +281,7 @@ export default function Admin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
+    setIsAuthenticating(true);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -266,16 +290,97 @@ export default function Admin() {
       });
       if (res.ok) {
         const data = await res.json();
+        if (data.requireOtp) {
+          setShowOtpInput(true);
+          setCooldown(30);
+        } else {
+          localStorage.setItem("admin_token", data.token);
+          localStorage.setItem("admin_last_activity", Date.now().toString());
+          setIsLoggedIn(true);
+          setShowLoginModal(false);
+          fetchMachines();
+        }
+      } else {
+        const data = await res.json();
+        setLoginError(data.error || "Invalid Admin Key");
+        if (res.status === 429) {
+          if (data.error.includes("minutes")) {
+            const match = data.error.match(/in (\d+) minutes/);
+            if (match) {
+              setCooldown(parseInt(match[1]) * 60);
+            }
+          } else if (data.error.includes("30 seconds")) {
+            setCooldown(30);
+          }
+        }
+      }
+    } catch (err) {
+      setLoginError("Login failed. Please try again.");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoginError("");
+    setIsResendingOtp(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        setCooldown(30);
+        setOtp("");
+      } else {
+        const data = await res.json();
+        setLoginError(data.error || "Failed to resend OTP");
+        if (res.status === 429) {
+          if (data.error.includes("minutes")) {
+            const match = data.error.match(/in (\d+) minutes/);
+            if (match) {
+              setCooldown(parseInt(match[1]) * 60);
+            }
+          } else if (data.error.includes("30 seconds")) {
+            setCooldown(30);
+          }
+        }
+      }
+    } catch (err) {
+      setLoginError("Failed to resend OTP. Please try again.");
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setIsAuthenticating(true);
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp }),
+      });
+      if (res.ok) {
+        const data = await res.json();
         localStorage.setItem("admin_token", data.token);
         localStorage.setItem("admin_last_activity", Date.now().toString());
         setIsLoggedIn(true);
         setShowLoginModal(false);
+        setShowOtpInput(false);
+        setOtp("");
         fetchMachines();
       } else {
-        setLoginError("Invalid Admin Key");
+        const data = await res.json();
+        setLoginError(data.error || "Invalid OTP");
       }
     } catch (err) {
-      setLoginError("Login failed. Please try again.");
+      setLoginError("Verification failed. Please try again.");
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
@@ -451,7 +556,7 @@ export default function Admin() {
     }
   };
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && !sessionTimedOut) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 lg:p-12 text-center">
@@ -474,30 +579,65 @@ export default function Admin() {
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-slate-900">Admin Authentication</h2>
-                  <button onClick={() => setShowLoginModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <button onClick={() => { setShowLoginModal(false); setShowOtpInput(false); setOtp(""); setPassword(""); setLoginError(""); setIsAuthenticating(false); }} className="text-slate-400 hover:text-slate-600">
                     <X className="h-6 w-6" />
                   </button>
                 </div>
                 
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 text-left">Admin Key</label>
-                    <input
-                      type="password"
-                      required
-                      autoFocus
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all"
-                      placeholder="Enter your key"
-                    />
-                  </div>
+                <form onSubmit={showOtpInput ? handleVerifyOtp : handleLogin} className="space-y-6">
+                  {!showOtpInput ? (
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2 text-left">Admin Key</label>
+                      <input
+                        type="password"
+                        required
+                        autoFocus
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all"
+                        placeholder="Enter your key"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-bold text-slate-700 text-left">Enter OTP</label>
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={cooldown > 0 || isAuthenticating || isResendingOtp}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800 disabled:text-slate-400 transition-colors"
+                        >
+                          {isResendingOtp ? "Resending..." : cooldown > 0 ? `Resend in ${Math.floor(cooldown / 60)}:${(cooldown % 60).toString().padStart(2, '0')}` : "Resend OTP"}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-4 text-left">A 6-digit code has been sent to the admin emails.</p>
+                      <input
+                        type="text"
+                        required
+                        autoFocus
+                        maxLength={6}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all text-center tracking-widest text-lg font-mono"
+                        placeholder="000000"
+                      />
+                    </div>
+                  )}
                   {loginError && <p className="text-red-500 text-sm font-medium">{loginError}</p>}
                   <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                    disabled={isAuthenticating || isResendingOtp}
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    Verify Key
+                    {isAuthenticating ? (
+                      <>
+                        <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                        {showOtpInput ? "Verifying..." : "Sending OTP..."}
+                      </>
+                    ) : (
+                      showOtpInput ? "Verify OTP" : "Verify Key"
+                    )}
                   </button>
                 </form>
               </div>
@@ -509,8 +649,9 @@ export default function Admin() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative">
+      <div className={`bg-slate-50 min-h-screen py-12 ${sessionTimedOut ? 'blur-md pointer-events-none select-none' : ''}`}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-3">
             <div className="bg-blue-100 p-3 rounded-xl">
@@ -826,6 +967,28 @@ export default function Admin() {
           )}
         </div>
       </div>
+      </div>
+
+      {sessionTimedOut && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full mx-4 animate-in fade-in zoom-in">
+            <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="h-8 w-8 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Session Expired</h2>
+            <p className="text-slate-600 mb-8">Your session timed out due to inactivity. Please log in again to continue.</p>
+            <button
+              onClick={() => {
+                setSessionTimedOut(false);
+                setIsLoggedIn(false);
+              }}
+              className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+            >
+              Go back to login
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
