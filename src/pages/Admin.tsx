@@ -12,6 +12,7 @@ export default function Admin() {
   const [cooldown, setCooldown] = useState(0);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [sessionTimedOut, setSessionTimedOut] = useState(false);
@@ -333,6 +334,8 @@ export default function Admin() {
       if (res.ok) {
         setCooldown(30);
         setOtp("");
+        setResendSuccess(true);
+        setTimeout(() => setResendSuccess(false), 3000);
       } else {
         const data = await res.json();
         setLoginError(data.error || "Failed to resend OTP");
@@ -606,9 +609,34 @@ export default function Admin() {
                           type="button"
                           onClick={handleResendOtp}
                           disabled={cooldown > 0 || isAuthenticating || isResendingOtp}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 disabled:text-slate-400 transition-colors"
+                          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                            resendSuccess 
+                              ? "bg-emerald-100 text-emerald-700" 
+                              : isResendingOtp
+                              ? "bg-blue-50 text-blue-600"
+                              : cooldown > 0
+                              ? "bg-slate-100 text-slate-500"
+                              : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 shadow-sm"
+                          }`}
                         >
-                          {isResendingOtp ? "Resending..." : cooldown > 0 ? `Resend in ${Math.floor(cooldown / 60)}:${(cooldown % 60).toString().padStart(2, '0')}` : "Resend OTP"}
+                          {resendSuccess ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Resent</span>
+                            </>
+                          ) : isResendingOtp ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Resending<span className="animate-pulse">...</span></span>
+                            </>
+                          ) : cooldown > 0 ? (
+                            <span>Resend in {Math.floor(cooldown / 60)}:{(cooldown % 60).toString().padStart(2, '0')}</span>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              <span>Resend OTP</span>
+                            </>
+                          )}
                         </button>
                       </div>
                       <p className="text-xs text-slate-500 mb-4 text-left">A 6-digit code has been sent to the admin emails.</p>
