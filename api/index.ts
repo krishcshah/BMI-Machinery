@@ -116,7 +116,7 @@ async function ensureDb() {
   }
 }
 
-app.get("/api/sitemap.xml", async (req, res) => {
+app.get("/sitemap.xml", async (req, res) => {
   try {
     await ensureDb();
     const pool = getPool();
