@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Decoded binary assets
+public/apple-touch-icon.png
+public/favicon-96x96.png
+public/web-app-manifest-192x192.png
+public/web-app-manifest-512x512.png
+public/favicon.ico
