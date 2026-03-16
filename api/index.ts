@@ -116,6 +116,51 @@ async function ensureDb() {
   }
 }
 
+app.get("/api/sitemap.xml", async (req, res) => {
+  try {
+    await ensureDb();
+    const pool = getPool();
+    const result = await pool.query("SELECT slug, id FROM machines");
+    const machines = result.rows;
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://bmimachinery.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://bmimachinery.com/catalogue</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://bmimachinery.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`;
+
+    for (const machine of machines) {
+      const path = machine.slug ? machine.slug : machine.id;
+      xml += `
+  <url>
+    <loc>https://bmimachinery.com/machine/${path}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    }
+
+    xml += `\n</urlset>`;
+
+    res.header("Content-Type", "application/xml");
+    res.send(xml);
+  } catch (error) {
+    console.error("Error generating sitemap:", error);
+    res.status(500).send("Error generating sitemap");
+  }
+});
+
 app.get("/api/debug-db", async (req, res) => {
   try {
     const pool = getPool();
