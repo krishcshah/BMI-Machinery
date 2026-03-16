@@ -264,99 +264,144 @@ export default function Home() {
       </section>
 
       {/* OUR CORE MACHINE CATEGORIES (SEO Sections) */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
-              Our Expertise
+      <section className="py-24 lg:py-32 bg-slate-50 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-100/50 blur-[120px]"></div>
+          <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-emerald-100/30 blur-[120px]"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-blue-100 border border-blue-200">
+              <span className="text-sm font-bold text-blue-700 uppercase tracking-wider">Our Expertise</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
+              Premium Industrial Equipment
             </h2>
-            <p className="text-lg text-slate-600">
+            <p className="text-xl text-slate-600 leading-relaxed">
               We source, inspect, and import a wide range of premium second-hand industrial equipment tailored for the Indian manufacturing sector.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Category 1 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
-              <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                <Printer className="h-7 w-7 text-blue-600" />
+            <div className="lg:col-span-7 group relative bg-white rounded-[2rem] p-8 lg:p-10 shadow-sm border border-slate-200 hover:shadow-2xl hover:border-blue-300 transition-all duration-500 overflow-hidden flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-slate-100 group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-500">
+                  <Printer className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors duration-500" />
+                </div>
+                
+                <h3 className="text-2xl lg:text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">1. Used Printing Machines from Germany to India</h3>
+                <p className="text-slate-600 mb-8 text-lg leading-relaxed">
+                  Upgrade your press room with a high-quality <strong>used offset printing machine India</strong> trusts. We source premium <strong>refurbished printing machines</strong> directly from European print houses.
+                </p>
+                
+                <ul className="space-y-4 mb-10 mt-auto">
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Heidelberg Speedmaster & SM series</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Komori offset machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Manroland presses</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> KBA printing machines</li>
+                </ul>
+                
+                <Link to="/catalogue?category=Printing" className="inline-flex items-center justify-between w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-500 mt-auto">
+                  <span className="font-bold text-slate-900 group-hover:text-white transition-colors duration-500 text-lg">View <strong>second hand Heidelberg press</strong> inventory</span> 
+                  <div className="bg-white rounded-full p-2 shadow-sm text-slate-400 group-hover:text-blue-600 transition-colors duration-500">
+                    <ArrowRight className="h-5 w-5 shrink-0" />
+                  </div>
+                </Link>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">1. Used Printing Machines from Germany to India</h3>
-              <p className="text-slate-600 mb-4 text-sm leading-relaxed">
-                Upgrade your press room with a high-quality <strong>used offset printing machine India</strong> trusts. We source premium <strong>refurbished printing machines</strong> directly from European print houses.
-              </p>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Heidelberg Speedmaster & SM series</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Komori offset machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Manroland presses</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> KBA printing machines</li>
-              </ul>
-              <Link to="/catalogue?category=Printing" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
-                <span className="leading-snug">View <strong>second hand Heidelberg press</strong> inventory</span> 
-                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-              </Link>
             </div>
 
             {/* Category 2 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
-              <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                <Box className="h-7 w-7 text-blue-600" />
+            <div className="lg:col-span-5 group relative bg-white rounded-[2rem] p-8 lg:p-10 shadow-sm border border-slate-200 hover:shadow-2xl hover:border-blue-300 transition-all duration-500 overflow-hidden flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-slate-100 group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-500">
+                  <Box className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors duration-500" />
+                </div>
+                
+                <h3 className="text-2xl font-extrabold text-slate-900 mb-4 tracking-tight">2. Used Packaging & Die Cutting Machines</h3>
+                <p className="text-slate-600 mb-8 text-base leading-relaxed">
+                  Enhance your packaging capabilities with reliable <strong>used packaging machinery India</strong>. We help you <strong>import Bobst machine India</strong> safely and efficiently.
+                </p>
+                
+                <ul className="space-y-4 mb-10 mt-auto">
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Polar cutting machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Bobst die cutting machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Folding carton machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Corrugation machines</li>
+                </ul>
+                
+                <Link to="/catalogue?category=Die+Cutting" className="inline-flex items-center justify-between w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-500 mt-auto">
+                  <span className="font-bold text-slate-900 group-hover:text-white transition-colors duration-500">Find a <strong>used die cutting machine</strong></span> 
+                  <div className="bg-white rounded-full p-2 shadow-sm text-slate-400 group-hover:text-blue-600 transition-colors duration-500">
+                    <ArrowRight className="h-5 w-5 shrink-0" />
+                  </div>
+                </Link>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">2. Used Packaging & Die Cutting Machines</h3>
-              <p className="text-slate-600 mb-4 text-sm leading-relaxed">
-                Enhance your packaging capabilities with reliable <strong>used packaging machinery India</strong>. We help you <strong>import Bobst machine India</strong> safely and efficiently.
-              </p>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Polar cutting machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Bobst die cutting machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Folding carton machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Corrugation machines</li>
-              </ul>
-              <Link to="/catalogue?category=Die+Cutting" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
-                <span className="leading-snug">Find a <strong>used die cutting machine</strong></span> 
-                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-              </Link>
             </div>
 
             {/* Category 3 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
-              <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                <BookOpen className="h-7 w-7 text-blue-600" />
+            <div className="lg:col-span-5 group relative bg-white rounded-[2rem] p-8 lg:p-10 shadow-sm border border-slate-200 hover:shadow-2xl hover:border-blue-300 transition-all duration-500 overflow-hidden flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-slate-100 group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-500">
+                  <BookOpen className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors duration-500" />
+                </div>
+                
+                <h3 className="text-2xl font-extrabold text-slate-900 mb-4 tracking-tight">3. Used Binding & Finishing Machines</h3>
+                <p className="text-slate-600 mb-8 text-base leading-relaxed">
+                  Complete your post-press setup with robust <strong>used book binding machines</strong> and a reliable <strong>used lamination machine India</strong>.
+                </p>
+                
+                <ul className="space-y-4 mb-10 mt-auto">
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Perfect binding machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Stitching machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Lamination machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Folding machines</li>
+                </ul>
+                
+                <Link to="/catalogue?category=Binding" className="inline-flex items-center justify-between w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-500 mt-auto">
+                  <span className="font-bold text-slate-900 group-hover:text-white transition-colors duration-500">View binding & finishing equipment</span> 
+                  <div className="bg-white rounded-full p-2 shadow-sm text-slate-400 group-hover:text-blue-600 transition-colors duration-500">
+                    <ArrowRight className="h-5 w-5 shrink-0" />
+                  </div>
+                </Link>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">3. Used Binding & Finishing Machines</h3>
-              <p className="text-slate-600 mb-4 text-sm leading-relaxed">
-                Complete your post-press setup with robust <strong>used book binding machines</strong> and a reliable <strong>used lamination machine India</strong>.
-              </p>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Perfect binding machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Stitching machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Lamination machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Folding machines</li>
-              </ul>
-              <Link to="/catalogue?category=Binding" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
-                <span className="leading-snug">View binding & finishing equipment</span> 
-                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-              </Link>
             </div>
 
             {/* Category 4 */}
-            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-shadow flex flex-col h-full">
-              <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                <Factory className="h-7 w-7 text-blue-600" />
+            <div className="lg:col-span-7 group relative bg-white rounded-[2rem] p-8 lg:p-10 shadow-sm border border-slate-200 hover:shadow-2xl hover:border-blue-300 transition-all duration-500 overflow-hidden flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-slate-100 group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-500">
+                  <Factory className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors duration-500" />
+                </div>
+                
+                <h3 className="text-2xl lg:text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">4. Other Industrial Machinery</h3>
+                <p className="text-slate-600 mb-8 text-lg leading-relaxed">
+                  Scale your manufacturing with top-tier <strong>used industrial machines India</strong>. We make it easy to <strong>import machinery from Germany</strong> with full technical validation.
+                </p>
+                
+                <ul className="space-y-4 mb-10 mt-auto">
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Injection Moulding Machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Metalworking Machines</li>
+                  <li className="flex items-start text-base text-slate-700 font-medium"><CheckCircle2 className="h-6 w-6 text-emerald-500 mr-3 shrink-0" /> Forklifts / Handling</li>
+                </ul>
+                
+                <Link to="/catalogue" className="inline-flex items-center justify-between w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-500 mt-auto">
+                  <span className="font-bold text-slate-900 group-hover:text-white transition-colors duration-500 text-lg">Browse <strong>other industrial machinery</strong></span> 
+                  <div className="bg-white rounded-full p-2 shadow-sm text-slate-400 group-hover:text-blue-600 transition-colors duration-500">
+                    <ArrowRight className="h-5 w-5 shrink-0" />
+                  </div>
+                </Link>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">4. Other Industrial Machinery</h3>
-              <p className="text-slate-600 mb-4 text-sm leading-relaxed">
-                Scale your manufacturing with top-tier <strong>used industrial machines India</strong>. We make it easy to <strong>import machinery from Germany</strong> with full technical validation.
-              </p>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Injection Moulding Machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Metalworking Machines</li>
-                <li className="flex items-center text-sm text-slate-700"><CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" /> Forklifts / Handling</li>
-              </ul>
-              <Link to="/catalogue" className="mt-auto pt-6 border-t border-slate-200 inline-flex items-center gap-2 text-blue-600 font-semibold text-sm hover:text-blue-800 group">
-                <span className="leading-snug">Browse <strong>other industrial machinery</strong></span> 
-                <ArrowRight className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-              </Link>
             </div>
           </div>
         </div>
