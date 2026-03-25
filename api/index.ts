@@ -522,6 +522,86 @@ app.post("/api/newsletter/verify", async (req, res) => {
   }
 });
 
+app.post("/api/newsletter/unsubscribe-request", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+  
+  await ensureDb();
+  try {
+    const existing = await getPool().query('SELECT * FROM subscribers WHERE email = $1', [email]);
+    if (existing.rows.length === 0) {
+      return res.status(400).json({ error: "Email not found in our subscriber list" });
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    newsletterOtps.set(email + '_unsub', { otp, expiry: Date.now() + 10 * 60 * 1000 });
+
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (smtpHost && smtpPort && smtpUser && smtpPass) {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: parseInt(smtpPort),
+        secure: parseInt(smtpPort) === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false }
+      });
+
+      await transporter.sendMail({
+        from: `"BMI Machinery" <${smtpUser}>`,
+        to: email,
+        subject: "Unsubscribe Verification - BMI Machinery",
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <h2 style="color: #1e40af; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Unsubscribe Request</h2>
+            <p style="font-size: 16px;">We received a request to unsubscribe this email from BMI Machinery updates. Your verification code is:</p>
+            <div style="background-color: #f3f4f6; padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0;">
+              <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1d4ed8;">${otp}</span>
+            </div>
+            <p style="color: #4b5563; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        `,
+      });
+    } else {
+      console.warn("SMTP not configured. Unsub OTP is:", otp);
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Unsubscribe request error:", error);
+    res.status(500).json({ error: "Failed to process request" });
+  }
+});
+
+app.post("/api/newsletter/unsubscribe-verify", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ error: "Email and OTP are required" });
+
+  const recordKey = email + '_unsub';
+  const record = newsletterOtps.get(recordKey);
+  if (!record) return res.status(400).json({ error: "No unsubscribe request found for this email" });
+  if (Date.now() > record.expiry) {
+    newsletterOtps.delete(recordKey);
+    return res.status(400).json({ error: "OTP has expired" });
+  }
+  if (record.otp !== otp) {
+    return res.status(401).json({ error: "Invalid OTP" });
+  }
+
+  newsletterOtps.delete(recordKey);
+  await ensureDb();
+  try {
+    await getPool().query('DELETE FROM subscribers WHERE email = $1', [email]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Unsubscribe verify error:", error);
+    res.status(500).json({ error: "Failed to unsubscribe" });
+  }
+});
+
 app.get("/api/machines", async (req, res) => {
   await ensureDb();
   try {
@@ -663,9 +743,6 @@ app.post("/api/machines", authMiddleware, async (req, res) => {
                   </div>
                   <div style="padding: 32px 24px;">
                     <h2 style="color: #1e40af; margin-top: 0;">${name}</h2>
-                    <p style="font-size: 16px; color: #4b5563; line-height: 1.6;">
-                      We've just added a new machine to our catalogue that might interest you.
-                    </p>
                     ${mainImage ? `<img src="${mainImage}" alt="${name}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin: 20px 0;" />` : ''}
                     <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; margin: 20px 0;">
                       <p style="margin: 0; color: #334155;"><strong>Category:</strong> ${category}</p>
@@ -676,7 +753,7 @@ app.post("/api/machines", authMiddleware, async (req, res) => {
                     </div>
                   </div>
                   <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b;">
-                    <p style="margin: 0;">You are receiving this because you subscribed to updates from BMI Machinery.</p>
+                    <p style="margin: 0;">You are receiving this because you subscribed to updates from BMI Machinery. <a href="https://bmimachinery.com/unsubscribe?email=${encodeURIComponent(sub.email)}" style="color: #64748b; text-decoration: underline;">Unsubscribe</a></p>
                   </div>
                 </div>
               `,
