@@ -17,6 +17,7 @@ import { jsPDF } from "jspdf/dist/jspdf.es.min.js";
 import autoTable from "jspdf-autotable";
 import { CONTACT_INFO } from "../constants";
 import { applyPdfBranding, applyPdfFooter, writeTextWithPageBreaks } from "../utils/pdfUtils";
+import NewsletterPopup from "../components/NewsletterPopup";
 
 interface Machine {
   id: number;
@@ -93,8 +94,7 @@ export default function MachineDetails() {
       // Title
       doc.setFontSize(24);
       doc.setTextColor(30, 41, 59);
-      const splitTitle = doc.splitTextToSize(machine.name, 180);
-      let currentY = await writeTextWithPageBreaks(doc, splitTitle, 14, 55, 10, "Product Brochure");
+      let currentY = await writeTextWithPageBreaks(doc, machine.name, 14, 55, 10, "Product Brochure");
       
       doc.setFontSize(14);
       doc.setTextColor(37, 99, 235);
@@ -124,15 +124,29 @@ export default function MachineDetails() {
             ctx.drawImage(img, 0, 0);
             const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
             
+            const maxWidth = 180;
+            const maxHeight = 120;
+            const imgRatio = img.width / img.height;
+            let printWidth = maxWidth;
+            let printHeight = maxWidth / imgRatio;
+            
+            if (printHeight > maxHeight) {
+              printHeight = maxHeight;
+              printWidth = maxHeight * imgRatio;
+            }
+            
+            // Center the image horizontally
+            const xOffset = 14 + (maxWidth - printWidth) / 2;
+            
             // Check if image fits on current page
-            if (currentY + 100 > doc.internal.pageSize.getHeight() - 55) {
+            if (currentY + printHeight > doc.internal.pageSize.getHeight() - 55) {
               doc.addPage();
               await applyPdfBranding(doc, "Product Brochure");
               currentY = 55;
             }
             
-            doc.addImage(dataUrl, "JPEG", 14, currentY, 180, 100);
-            currentY += 110;
+            doc.addImage(dataUrl, "JPEG", xOffset, currentY, printWidth, printHeight);
+            currentY += printHeight + 10;
           }
         } catch (e) {
           console.error("Error adding image to PDF:", e);
@@ -153,8 +167,7 @@ export default function MachineDetails() {
       
       doc.setFontSize(11);
       doc.setTextColor(71, 85, 105);
-      const splitDescription = doc.splitTextToSize(machine.short_description, 180);
-      currentY = await writeTextWithPageBreaks(doc, splitDescription, 14, currentY, 6, "Product Brochure");
+      currentY = await writeTextWithPageBreaks(doc, machine.short_description, 14, currentY, 6, "Product Brochure");
 
       // Specifications
       if (currentY + 20 > doc.internal.pageSize.getHeight() - 55) {
@@ -173,8 +186,7 @@ export default function MachineDetails() {
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105);
       const specs = machine.specifications_md.replace(/#/g, '').replace(/\*/g, '');
-      const splitSpecs = doc.splitTextToSize(specs, 180);
-      await writeTextWithPageBreaks(doc, splitSpecs, 14, currentY, 5, "Product Brochure");
+      await writeTextWithPageBreaks(doc, specs, 14, currentY, 5, "Product Brochure");
 
       await applyPdfFooter(doc, machine.name);
       doc.save(`${machine.name.replace(/\s+/g, '_')}_Brochure.pdf`);
@@ -350,6 +362,7 @@ export default function MachineDetails() {
           </div>
         </div>
       </div>
+      <NewsletterPopup />
     </div>
   );
 }

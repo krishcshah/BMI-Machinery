@@ -130,8 +130,7 @@ export default function Catalogue() {
         
         doc.setFontSize(20);
         doc.setTextColor(30, 41, 59);
-        const splitTitle = doc.splitTextToSize(machine.name, 180);
-        let currentY = await writeTextWithPageBreaks(doc, splitTitle, 14, 55, 8, "Machine Details");
+        let currentY = await writeTextWithPageBreaks(doc, machine.name, 14, 55, 8, "Machine Details");
         
         doc.setFontSize(12);
         doc.setTextColor(37, 99, 235);
@@ -162,14 +161,28 @@ export default function Catalogue() {
               ctx.drawImage(img, 0, 0);
               const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
               
-              if (currentY + 100 > doc.internal.pageSize.getHeight() - 55) {
+              const maxWidth = 180;
+              const maxHeight = 120;
+              const imgRatio = img.width / img.height;
+              let printWidth = maxWidth;
+              let printHeight = maxWidth / imgRatio;
+              
+              if (printHeight > maxHeight) {
+                printHeight = maxHeight;
+                printWidth = maxHeight * imgRatio;
+              }
+              
+              // Center the image horizontally
+              const xOffset = 14 + (maxWidth - printWidth) / 2;
+              
+              if (currentY + printHeight > doc.internal.pageSize.getHeight() - 55) {
                 doc.addPage();
                 await applyPdfBranding(doc, "Machine Details");
                 currentY = 55;
               }
               
-              doc.addImage(dataUrl, "JPEG", 14, currentY, 180, 100);
-              currentY += 110;
+              doc.addImage(dataUrl, "JPEG", xOffset, currentY, printWidth, printHeight);
+              currentY += printHeight + 10;
             }
           } catch (e) {
             console.error("Error adding image to PDF:", e);
@@ -189,8 +202,7 @@ export default function Catalogue() {
         
         doc.setFontSize(11);
         doc.setTextColor(71, 85, 105); // slate-600
-        const splitDescription = doc.splitTextToSize(machine.short_description, 180);
-        currentY = await writeTextWithPageBreaks(doc, splitDescription, 14, currentY, 6, "Machine Details");
+        currentY = await writeTextWithPageBreaks(doc, machine.short_description, 14, currentY, 6, "Machine Details");
 
         // Fetch full details for specifications
         try {
@@ -214,8 +226,7 @@ export default function Catalogue() {
               doc.setFontSize(10);
               doc.setTextColor(71, 85, 105);
               const specs = fullData.specifications_md.replace(/#/g, '').replace(/\*/g, '');
-              const splitSpecs = doc.splitTextToSize(specs, 180);
-              await writeTextWithPageBreaks(doc, splitSpecs, 14, currentY, 5, "Machine Details");
+              await writeTextWithPageBreaks(doc, specs, 14, currentY, 5, "Machine Details");
             }
           }
         } catch (e) {

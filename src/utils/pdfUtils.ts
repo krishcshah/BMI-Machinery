@@ -112,6 +112,12 @@ export const writeTextWithPageBreaks = async (
   const bottomMargin = 55; // 45 for footer + 10 padding
   let currentY = startY;
 
+  // If text is an array, join it with spaces or newlines depending on original intent.
+  // Actually, if it's already split by splitTextToSize, it might be better to just print it.
+  // But since splitTextToSize is causing issues, let's let doc.text handle the wrapping.
+  // Wait, if we change the signature, we might break things.
+  // Let's just iterate over the lines, but use doc.text with maxWidth.
+  
   const lines = Array.isArray(text) ? text : [text];
 
   for (const line of lines) {
@@ -120,8 +126,13 @@ export const writeTextWithPageBreaks = async (
       await applyPdfBranding(doc, title);
       currentY = 55; // start below header
     }
-    doc.text(line, x, currentY);
-    currentY += lineHeight;
+    
+    // Use doc.text with maxWidth to ensure it never overflows
+    doc.text(line, x, currentY, { maxWidth: 180 });
+    
+    // Calculate how much height this line actually took
+    const dims = doc.getTextDimensions(line, { maxWidth: 180 });
+    currentY += Math.max(dims.h, lineHeight);
   }
 
   return currentY;

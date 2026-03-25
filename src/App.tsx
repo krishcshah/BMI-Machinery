@@ -14,6 +14,8 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
+import NewsletterSection from "./components/NewsletterSection";
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -42,6 +44,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <NewsletterSection />
         <Footer />
         <WhatsAppWidget />
       </div>
