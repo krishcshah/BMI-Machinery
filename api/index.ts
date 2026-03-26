@@ -76,6 +76,13 @@ async function ensureDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Enable Row Level Security (RLS) to secure tables from Supabase's public PostgREST API.
+    // Since we use a custom Express backend with a direct Postgres connection, 
+    // we don't need public API access. Enabling RLS without policies denies all public access.
+    await getPool().query(`ALTER TABLE machines ENABLE ROW LEVEL SECURITY;`);
+    await getPool().query(`ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;`);
+
     const countRes = await getPool().query('SELECT COUNT(*) as count FROM machines');
     if (parseInt(countRes.rows[0].count) === 0) {
       await getPool().query(`
