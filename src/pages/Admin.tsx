@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock } from "lucide-react";
+import { PlusCircle, Save, LogIn, Image as ImageIcon, X, Loader2, Trash2, Sparkles, Check, RefreshCw, Edit2, Lock, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
 
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
@@ -26,6 +26,13 @@ export default function Admin() {
   
   const [machines, setMachines] = useState<any[]>([]);
   const [fetchingMachines, setFetchingMachines] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
   
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -559,6 +566,17 @@ export default function Admin() {
     }
   };
 
+  const filteredMachines = machines.filter(m => 
+    m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    m.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const totalPages = Math.ceil(filteredMachines.length / itemsPerPage);
+  const paginatedMachines = filteredMachines.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   if (!isLoggedIn && !sessionTimedOut) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
@@ -914,21 +932,33 @@ export default function Admin() {
 
         {/* Machine List Section */}
         <div className="mt-16">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <h2 className="text-2xl font-bold text-slate-900">Existing Machines</h2>
-            <button 
-              onClick={fetchMachines}
-              className="text-sm text-blue-600 font-medium hover:underline"
-            >
-              Refresh List
-            </button>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search machines..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                />
+              </div>
+              <button 
+                onClick={fetchMachines}
+                className="text-sm text-blue-600 font-medium hover:underline whitespace-nowrap"
+              >
+                Refresh List
+              </button>
+            </div>
           </div>
 
           {fetchingMachines ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
             </div>
-          ) : machines.length > 0 ? (
+          ) : filteredMachines.length > 0 ? (
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -941,7 +971,7 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {machines.map((machine) => (
+                    {paginatedMachines.map((machine) => (
                       <tr key={machine.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -987,10 +1017,36 @@ export default function Admin() {
                   </tbody>
                 </table>
               </div>
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between bg-slate-50 gap-4">
+                  <span className="text-sm text-slate-500">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredMachines.length)} of {filteredMachines.length} entries
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm font-medium text-slate-700 px-2">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-12 text-center">
-              <p className="text-slate-500">No machines found in the database.</p>
+              <p className="text-slate-500">No machines found matching your search.</p>
             </div>
           )}
         </div>
