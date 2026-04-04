@@ -77,6 +77,10 @@ async function ensureDb() {
       )
     `);
 
+    // Add deleted_at columns for soft delete
+    await getPool().query(`ALTER TABLE machines ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;`);
+    await getPool().query(`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;`);
+
     // Enable Row Level Security (RLS) to secure tables from Supabase's public PostgREST API.
     // Since we use a custom Express backend with a direct Postgres connection, 
     // we don't need public API access. Enabling RLS without policies denies all public access.
@@ -615,9 +619,9 @@ app.get("/api/machines", async (req, res) => {
     const { category } = req.query;
     let machines;
     if (category && category !== "All") {
-      machines = (await getPool().query('SELECT * FROM machines WHERE category = $1 ORDER BY id DESC', [category as string])).rows;
+      machines = (await getPool().query('SELECT * FROM machines WHERE category = $1 AND deleted_at IS NULL ORDER BY id DESC', [category as string])).rows;
     } else {
-      machines = (await getPool().query('SELECT * FROM machines ORDER BY id DESC')).rows;
+      machines = (await getPool().query('SELECT * FROM machines WHERE deleted_at IS NULL ORDER BY id DESC')).rows;
     }
     
     const formattedMachines = machines.map(m => {
@@ -651,12 +655,12 @@ app.get("/api/machines/:idOrSlug", async (req, res) => {
     let machine;
     
     if (!isNaN(Number(idOrSlug))) {
-      const resDb = await getPool().query('SELECT * FROM machines WHERE id = $1', [Number(idOrSlug)]);
+      const resDb = await getPool().query('SELECT * FROM machines WHERE id = $1 AND deleted_at IS NULL', [Number(idOrSlug)]);
       machine = resDb.rows[0];
     }
     
     if (!machine) {
-      const resDb = await getPool().query('SELECT * FROM machines WHERE slug = $1', [idOrSlug]);
+      const resDb = await getPool().query('SELECT * FROM machines WHERE slug = $1 AND deleted_at IS NULL', [idOrSlug]);
       machine = resDb.rows[0];
     }
 
@@ -696,6 +700,31 @@ app.post("/api/upload", authMiddleware, upload.array("images", 10), async (req, 
   } catch (error: any) {
     console.error("Upload error:", error);
     res.status(500).json({ error: "Failed to upload images" });
+  }
+});
+
+app.get("/api/subscribers", authMiddleware, async (req, res) => {
+  await ensureDb();
+  try {
+    const result = await getPool().query('SELECT * FROM subscribers WHERE deleted_at IS NULL ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to fetch subscribers: " + error.message });
+  }
+});
+
+app.delete("/api/subscribers/:id", authMiddleware, async (req, res) => {
+  await ensureDb();
+  const { id } = req.params;
+  try {
+    const result = await getPool().query('UPDATE subscribers SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id', [id]);
+    if (result.rowCount && result.rowCount > 0) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: "Subscriber not found" });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to delete subscriber: " + error.message });
   }
 });
 
@@ -823,28 +852,160 @@ app.delete("/api/machines/:id", authMiddleware, async (req, res) => {
   await ensureDb();
   const { id } = req.params;
   try {
-    const machineRes = await getPool().query('SELECT image_urls FROM machines WHERE id = $1', [id]);
+    const machineRes = await getPool().query('SELECT image_urls FROM machines WHERE id = $1 AND deleted_at IS NULL', [id]);
     if (machineRes.rowCount === 0) {
       return res.status(404).json({ error: "Machine not found" });
     }
 
-    await getPool().query('DELETE FROM machines WHERE id = $1', [id]);
-
-    try {
-      const urls = JSON.parse(machineRes.rows[0].image_urls);
-      for (const url of urls) {
-        if (url.includes('public.blob.vercel-storage.com')) {
-          await del(url);
-        }
-      }
-    } catch (e) {
-      console.error("Error deleting image files from blob:", e);
-    }
+    await getPool().query('UPDATE machines SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
 
     res.json({ success: true });
   } catch (error: any) {
     console.error("DELETE /api/machines/:id error:", error);
     res.status(500).json({ error: "Failed to delete machine" });
+  }
+});
+
+// --- Recycle Bin Auth & Endpoints ---
+
+let currentBinOtp: string | null = null;
+let binOtpExpiry: number | null = null;
+const BIN_TOKEN = "bin_authorized_token_" + Math.random().toString(36).substring(2);
+
+const binAuthMiddleware = (req: any, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (token !== BIN_TOKEN) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+};
+
+app.post("/api/auth/bin-login", async (req, res) => {
+  const { password } = req.body;
+  if (!process.env.BIN_ADMIN_KEY) {
+    return res.status(500).json({ error: "BIN_ADMIN_KEY is not configured on the server." });
+  }
+  
+  if (password === process.env.BIN_ADMIN_KEY) {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    currentBinOtp = otp;
+    binOtpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (smtpHost && smtpPort && smtpUser && smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: parseInt(smtpPort),
+          secure: parseInt(smtpPort) === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false }
+        });
+
+        await transporter.sendMail({
+          from: `"BMI Machinery Security" <${smtpUser}>`,
+          to: "de.krish.shah@gmail.com",
+          subject: "Recycle Bin Access OTP - BMI Machinery",
+          text: `Your OTP for Recycle Bin access is: ${otp}\n\nThis code will expire in 10 minutes.`,
+        });
+        return res.json({ success: true, requireOtp: true });
+      } catch (error) {
+        console.error("Failed to send Bin OTP email:", error);
+        return res.status(500).json({ error: "Failed to send OTP email" });
+      }
+    } else {
+      console.warn("SMTP not configured. Skipping OTP for bin.");
+      return res.json({ success: true, token: BIN_TOKEN });
+    }
+  } else {
+    res.status(401).json({ error: "Invalid password" });
+  }
+});
+
+app.post("/api/auth/bin-verify", (req, res) => {
+  const { otp } = req.body;
+  if (!currentBinOtp || !binOtpExpiry || Date.now() > binOtpExpiry) {
+    return res.status(400).json({ error: "OTP expired or not requested" });
+  }
+  if (otp === currentBinOtp) {
+    currentBinOtp = null;
+    binOtpExpiry = null;
+    res.json({ success: true, token: BIN_TOKEN });
+  } else {
+    res.status(401).json({ error: "Invalid OTP" });
+  }
+});
+
+app.get("/api/recycle-bin", binAuthMiddleware, async (req, res) => {
+  await ensureDb();
+  try {
+    const machines = await getPool().query('SELECT * FROM machines WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC');
+    const subscribers = await getPool().query('SELECT * FROM subscribers WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC');
+    
+    const formattedMachines = machines.rows.map(m => {
+      let urls = [];
+      try { urls = JSON.parse(m.image_urls); } catch (e) {}
+      return { ...m, image_urls: urls };
+    });
+
+    res.json({ machines: formattedMachines, subscribers: subscribers.rows });
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to fetch recycle bin: " + error.message });
+  }
+});
+
+app.post("/api/recycle-bin/restore/:type/:id", binAuthMiddleware, async (req, res) => {
+  await ensureDb();
+  const { type, id } = req.params;
+  try {
+    if (type === 'machines') {
+      await getPool().query('UPDATE machines SET deleted_at = NULL WHERE id = $1', [id]);
+    } else if (type === 'subscribers') {
+      await getPool().query('UPDATE subscribers SET deleted_at = NULL WHERE id = $1', [id]);
+    } else {
+      return res.status(400).json({ error: "Invalid type" });
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to restore item: " + error.message });
+  }
+});
+
+app.delete("/api/recycle-bin/permanent/:type/:id", binAuthMiddleware, async (req, res) => {
+  await ensureDb();
+  const { type, id } = req.params;
+  try {
+    if (type === 'machines') {
+      const machineRes = await getPool().query('SELECT image_urls FROM machines WHERE id = $1', [id]);
+      if (machineRes.rowCount > 0) {
+        try {
+          const urls = JSON.parse(machineRes.rows[0].image_urls);
+          for (const url of urls) {
+            if (url.includes('public.blob.vercel-storage.com')) {
+              await del(url);
+            }
+          }
+        } catch (e) {
+          console.error("Error deleting image files from blob:", e);
+        }
+      }
+      await getPool().query('DELETE FROM machines WHERE id = $1', [id]);
+    } else if (type === 'subscribers') {
+      await getPool().query('DELETE FROM subscribers WHERE id = $1', [id]);
+    } else {
+      return res.status(400).json({ error: "Invalid type" });
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to permanently delete item: " + error.message });
   }
 });
 

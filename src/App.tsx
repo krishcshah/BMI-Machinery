@@ -27,29 +27,38 @@ function ScrollToTop() {
   return null;
 }
 
+function MainLayout() {
+  const { pathname } = useLocation();
+  const isAdminRoute = pathname.startsWith('/admin');
+
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <Navbar />
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/catalogue" element={<Catalogue />} />
+          <Route path="/machine/:idOrSlug" element={<MachineDetails />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      {!isAdminRoute && <NewsletterSection />}
+      <Footer />
+      <WhatsAppWidget />
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/catalogue" element={<Catalogue />} />
-            <Route path="/machine/:idOrSlug" element={<MachineDetails />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/unsubscribe" element={<Unsubscribe />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        <NewsletterSection />
-        <Footer />
-        <WhatsAppWidget />
-      </div>
+      <MainLayout />
       <Analytics />
       <SpeedInsights />
     </Router>

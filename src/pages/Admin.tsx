@@ -30,9 +30,28 @@ export default function Admin() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [fetchingSubscribers, setFetchingSubscribers] = useState(false);
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState("");
+  const [subscriberPage, setSubscriberPage] = useState(1);
+
+  const [showBinModal, setShowBinModal] = useState(false);
+  const [binPassword, setBinPassword] = useState("");
+  const [showBinOtp, setShowBinOtp] = useState(false);
+  const [binOtp, setBinOtp] = useState("");
+  const [binToken, setBinToken] = useState<string | null>(null);
+  const [binItems, setBinItems] = useState<{ machines: any[], subscribers: any[] }>({ machines: [], subscribers: [] });
+  const [fetchingBin, setFetchingBin] = useState(false);
+  const [binError, setBinError] = useState("");
+  const [binActiveTab, setBinActiveTab] = useState<'machines' | 'subscribers'>('machines');
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  useEffect(() => {
+    setSubscriberPage(1);
+  }, [subscriberSearchQuery]);
   
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -91,6 +110,7 @@ export default function Admin() {
       } else {
         setIsLoggedIn(true);
         fetchMachines();
+        fetchSubscribers();
         localStorage.setItem("admin_last_activity", Date.now().toString());
       }
     }
@@ -207,8 +227,152 @@ export default function Admin() {
     }
   };
 
+  const fetchSubscribers = async () => {
+    setFetchingSubscribers(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await fetch("/api/subscribers", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSubscribers(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch subscribers:", error);
+    } finally {
+      setFetchingSubscribers(false);
+    }
+  };
+
+  const deleteSubscriber = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this subscriber? It will be moved to the recycle bin.")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await fetch(`/api/subscribers/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        setMessage({ type: "success", text: "Subscriber moved to recycle bin!" });
+        fetchSubscribers();
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Failed to delete subscriber" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while deleting." });
+    }
+  };
+
+  const handleBinLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBinError("");
+    try {
+      const res = await fetch("/api/auth/bin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: binPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.requireOtp) {
+          setShowBinOtp(true);
+        } else if (data.token) {
+          setBinToken(data.token);
+          fetchBinItems(data.token);
+        }
+      } else {
+        setBinError(data.error || "Invalid password");
+      }
+    } catch (error) {
+      setBinError("An error occurred. Please try again.");
+    }
+  };
+
+  const handleBinVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBinError("");
+    try {
+      const res = await fetch("/api/auth/bin-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: binOtp })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBinToken(data.token);
+        fetchBinItems(data.token);
+      } else {
+        setBinError(data.error || "Invalid OTP");
+      }
+    } catch (error) {
+      setBinError("An error occurred. Please try again.");
+    }
+  };
+
+  const fetchBinItems = async (token: string) => {
+    setFetchingBin(true);
+    try {
+      const res = await fetch("/api/recycle-bin", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBinItems(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch bin items:", error);
+    } finally {
+      setFetchingBin(false);
+    }
+  };
+
+  const restoreBinItem = async (type: 'machines' | 'subscribers', id: number) => {
+    if (!binToken) return;
+    try {
+      const res = await fetch(`/api/recycle-bin/restore/${type}/${id}`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${binToken}` }
+      });
+      if (res.ok) {
+        fetchBinItems(binToken);
+        if (type === 'machines') fetchMachines();
+        if (type === 'subscribers') fetchSubscribers();
+      }
+    } catch (error) {
+      console.error("Failed to restore item:", error);
+    }
+  };
+
+  const permanentDeleteBinItem = async (type: 'machines' | 'subscribers', id: number) => {
+    if (!binToken) return;
+    if (!window.confirm("Are you sure you want to PERMANENTLY delete this item? This cannot be undone.")) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/recycle-bin/permanent/${type}/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${binToken}` }
+      });
+      if (res.ok) {
+        fetchBinItems(binToken);
+      }
+    } catch (error) {
+      console.error("Failed to permanently delete item:", error);
+    }
+  };
+
   const deleteMachine = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this machine? This will also delete its images.")) {
+    if (!window.confirm("Are you sure you want to delete this machine? It will be moved to the recycle bin.")) {
       return;
     }
 
@@ -383,6 +547,7 @@ export default function Admin() {
         setShowOtpInput(false);
         setOtp("");
         fetchMachines();
+        fetchSubscribers();
       } else {
         const data = await res.json();
         setLoginError(data.error || "Invalid OTP");
@@ -575,6 +740,15 @@ export default function Admin() {
   const paginatedMachines = filteredMachines.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
+  );
+
+  const filteredSubscribers = subscribers.filter(s => 
+    s.email.toLowerCase().includes(subscriberSearchQuery.toLowerCase())
+  );
+  const totalSubscriberPages = Math.ceil(filteredSubscribers.length / itemsPerPage);
+  const paginatedSubscribers = filteredSubscribers.slice(
+    (subscriberPage - 1) * itemsPerPage,
+    subscriberPage * itemsPerPage
   );
 
   if (!isLoggedIn && !sessionTimedOut) {
@@ -1050,8 +1224,292 @@ export default function Admin() {
             </div>
           )}
         </div>
+
+        {/* Subscribers List Section */}
+        <div className="mt-16">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Email Subscribers</h2>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search emails..."
+                  value={subscriberSearchQuery}
+                  onChange={(e) => setSubscriberSearchQuery(e.target.value)}
+                  className="pl-9 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                />
+              </div>
+              <button 
+                onClick={fetchSubscribers}
+                className="text-sm text-blue-600 font-medium hover:underline whitespace-nowrap"
+              >
+                Refresh List
+              </button>
+            </div>
+          </div>
+
+          {fetchingSubscribers ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+            </div>
+          ) : filteredSubscribers.length > 0 ? (
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700">Email</th>
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700">Status</th>
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700">Subscribed On</th>
+                      <th className="px-6 py-4 text-sm font-bold text-slate-700 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {paginatedSubscribers.map((sub) => (
+                      <tr key={sub.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="font-medium text-slate-900">{sub.email}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs font-bold rounded-md ${sub.verified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                            {sub.verified ? 'Verified' : 'Pending'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {new Date(sub.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => deleteSubscriber(sub.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Subscriber"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalSubscriberPages > 1 && (
+                <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between bg-slate-50 gap-4">
+                  <span className="text-sm text-slate-500">
+                    Showing {(subscriberPage - 1) * itemsPerPage + 1} to {Math.min(subscriberPage * itemsPerPage, filteredSubscribers.length)} of {filteredSubscribers.length} entries
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSubscriberPage(p => Math.max(1, p - 1))}
+                      disabled={subscriberPage === 1}
+                      className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm font-medium text-slate-700 px-2">
+                      Page {subscriberPage} of {totalSubscriberPages}
+                    </span>
+                    <button
+                      onClick={() => setSubscriberPage(p => Math.min(totalSubscriberPages, p + 1))}
+                      disabled={subscriberPage === totalSubscriberPages}
+                      className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-12 text-center">
+              <p className="text-slate-500">No subscribers found.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Recycle Bin Button */}
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={() => setShowBinModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+          >
+            <Trash2 className="h-4 w-4" />
+            Recycle Bin
+          </button>
+        </div>
       </div>
       </div>
+
+      {/* Recycle Bin Modal */}
+      {showBinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-200 rounded-lg">
+                  <Trash2 className="h-5 w-5 text-slate-700" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900">Recycle Bin</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowBinModal(false);
+                  setBinToken(null);
+                  setBinPassword("");
+                  setBinOtp("");
+                  setShowBinOtp(false);
+                  setBinError("");
+                }}
+                className="p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-grow">
+              {!binToken ? (
+                <div className="max-w-sm mx-auto py-12">
+                  <div className="text-center mb-8">
+                    <Lock className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-slate-900">Restricted Access</h3>
+                    <p className="text-slate-500 text-sm mt-2">Please enter the bin admin key to access deleted items.</p>
+                  </div>
+                  
+                  {binError && (
+                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium border border-red-100">
+                      {binError}
+                    </div>
+                  )}
+
+                  {!showBinOtp ? (
+                    <form onSubmit={handleBinLogin} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Bin Admin Key</label>
+                        <input
+                          type="password"
+                          value={binPassword}
+                          onChange={(e) => setBinPassword(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors"
+                      >
+                        Request Access
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleBinVerify} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Enter OTP</label>
+                        <p className="text-xs text-slate-500 mb-4">An OTP has been sent to de.krish.shah@gmail.com</p>
+                        <input
+                          type="text"
+                          value={binOtp}
+                          onChange={(e) => setBinOtp(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-center text-2xl tracking-widest"
+                          maxLength={6}
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors"
+                      >
+                        Verify & Access
+                      </button>
+                    </form>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex border-b border-slate-200 mb-6">
+                    <button
+                      className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${binActiveTab === 'machines' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                      onClick={() => setBinActiveTab('machines')}
+                    >
+                      Machines ({binItems.machines.length})
+                    </button>
+                    <button
+                      className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${binActiveTab === 'subscribers' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                      onClick={() => setBinActiveTab('subscribers')}
+                    >
+                      Subscribers ({binItems.subscribers.length})
+                    </button>
+                  </div>
+
+                  {fetchingBin ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+                    </div>
+                  ) : (
+                    <div>
+                      {binActiveTab === 'machines' && (
+                        binItems.machines.length > 0 ? (
+                          <div className="space-y-4">
+                            {binItems.machines.map(machine => (
+                              <div key={machine.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                  <div className="h-12 w-12 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                                    {machine.image_urls && machine.image_urls[0] && (
+                                      <img src={machine.image_urls[0]} alt={machine.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-slate-900">{machine.name}</h4>
+                                    <p className="text-xs text-slate-500">Deleted: {new Date(machine.deleted_at).toLocaleString()}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => restoreBinItem('machines', machine.id)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium transition-colors">
+                                    Restore
+                                  </button>
+                                  <button onClick={() => permanentDeleteBinItem('machines', machine.id)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors">
+                                    Delete Forever
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-slate-500 py-8">No deleted machines.</p>
+                        )
+                      )}
+
+                      {binActiveTab === 'subscribers' && (
+                        binItems.subscribers.length > 0 ? (
+                          <div className="space-y-4">
+                            {binItems.subscribers.map(sub => (
+                              <div key={sub.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                                <div>
+                                  <h4 className="font-medium text-slate-900">{sub.email}</h4>
+                                  <p className="text-xs text-slate-500">Deleted: {new Date(sub.deleted_at).toLocaleString()}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => restoreBinItem('subscribers', sub.id)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium transition-colors">
+                                    Restore
+                                  </button>
+                                  <button onClick={() => permanentDeleteBinItem('subscribers', sub.id)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors">
+                                    Delete Forever
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-slate-500 py-8">No deleted subscribers.</p>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {sessionTimedOut && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
