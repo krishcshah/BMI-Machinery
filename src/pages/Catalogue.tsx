@@ -53,11 +53,7 @@ export default function Catalogue() {
     const fetchMachines = async () => {
       setLoading(true);
       try {
-        const url =
-          categoryFilter === "All"
-            ? "/api/machines"
-            : `/api/machines?category=${categoryFilter}`;
-        const res = await fetch(url);
+        const res = await fetch("/api/machines");
         if (!res.ok) {
           throw new Error(`Server returned ${res.status}`);
         }
@@ -65,31 +61,42 @@ export default function Catalogue() {
         console.log("Fetched machines:", data);
         if (Array.isArray(data)) {
           setMachines(data);
-          setFilteredMachines(data);
         } else {
           console.error("Expected array from API, got:", data);
           setMachines([]);
-          setFilteredMachines([]);
         }
       } catch (error) {
         console.error("Failed to fetch machines:", error);
         setMachines([]);
-        setFilteredMachines([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMachines();
-  }, [categoryFilter]);
+  }, []);
 
   useEffect(() => {
-    const filtered = machines.filter((m) =>
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.short_description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let filtered = machines;
+    
+    if (categoryFilter !== "All") {
+      filtered = filtered.filter(m => m.category === categoryFilter);
+    }
+    
+    if (searchQuery) {
+      filtered = filtered.filter((m) =>
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.short_description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
     setFilteredMachines(filtered);
-  }, [searchQuery, machines]);
+  }, [searchQuery, categoryFilter, machines]);
+
+  const getCategoryCount = (cat: string) => {
+    if (cat === "All") return machines.length;
+    return machines.filter(m => m.category === cat).length;
+  };
 
   const handleCategoryChange = (cat: string) => {
     if (cat === "All") {
@@ -108,7 +115,7 @@ export default function Catalogue() {
       
       await applyPdfBranding(doc, "Product Catalogue");
 
-      const tableData = machines.map((m) => [
+      const tableData = filteredMachines.map((m) => [
         m.name,
         m.category,
         m.short_description
@@ -124,7 +131,7 @@ export default function Catalogue() {
       });
 
       // Add detailed pages for each machine
-      for (const machine of machines) {
+      for (const machine of filteredMachines) {
         doc.addPage();
         await applyPdfBranding(doc, "Machine Details");
         
@@ -299,13 +306,14 @@ export default function Catalogue() {
                         handleCategoryChange(cat);
                         setShowFilterDropdown(false);
                       }}
-                      className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
+                      className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors flex justify-between items-center ${
                         categoryFilter === cat
                           ? "bg-blue-50 text-blue-700"
                           : "text-slate-600 hover:bg-slate-50"
                       }`}
                     >
-                      {cat}
+                      <span>{cat}</span>
+                      <span className="text-xs opacity-60">({getCategoryCount(cat)})</span>
                     </button>
                   ))}
                 </div>
@@ -344,13 +352,14 @@ export default function Catalogue() {
                   <button
                     key={cat}
                     onClick={() => handleCategoryChange(cat)}
-                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors flex justify-between items-center ${
                       categoryFilter === cat
                         ? "bg-blue-50 text-blue-700"
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     }`}
                   >
-                    {cat}
+                    <span>{cat}</span>
+                    <span className="text-xs opacity-60">({getCategoryCount(cat)})</span>
                   </button>
                 ))}
               </div>
