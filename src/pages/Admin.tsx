@@ -34,6 +34,9 @@ export default function Admin() {
   const [fetchingSubscribers, setFetchingSubscribers] = useState(false);
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState("");
   const [subscriberPage, setSubscriberPage] = useState(1);
+  const [showAddSubscribersModal, setShowAddSubscribersModal] = useState(false);
+  const [bulkEmails, setBulkEmails] = useState("");
+  const [isAddingSubscribers, setIsAddingSubscribers] = useState(false);
 
   const [showBinModal, setShowBinModal] = useState(false);
   const [binPassword, setBinPassword] = useState("");
@@ -270,6 +273,40 @@ export default function Admin() {
       }
     } catch (error) {
       setMessage({ type: "error", text: "An error occurred while deleting." });
+    }
+  };
+
+  const handleAddSubscribers = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAddingSubscribers(true);
+    
+    const emails = bulkEmails.split(/[\n, ]+/).map(e => e.trim()).filter(e => e);
+    
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await fetch("/api/subscribers/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ emails })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setMessage({ type: "success", text: `Successfully added/updated ${data.added} subscribers!` });
+        setShowAddSubscribersModal(false);
+        setBulkEmails("");
+        fetchSubscribers();
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Failed to add subscribers" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while adding subscribers." });
+    } finally {
+      setIsAddingSubscribers(false);
     }
   };
 
@@ -1246,6 +1283,13 @@ export default function Admin() {
               >
                 Refresh List
               </button>
+              <button 
+                onClick={() => setShowAddSubscribersModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Add Subscribers
+              </button>
             </div>
           </div>
 
@@ -1339,6 +1383,55 @@ export default function Admin() {
         </div>
       </div>
       </div>
+
+      {/* Add Subscribers Modal */}
+      {showAddSubscribersModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-900">Add Subscribers</h2>
+              <button
+                onClick={() => setShowAddSubscribersModal(false)}
+                className="p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAddSubscribers} className="p-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                Paste Email Addresses
+              </label>
+              <p className="text-xs text-slate-500 mb-4">
+                Separate emails by commas, spaces, or new lines. They will be added as verified subscribers.
+              </p>
+              <textarea
+                value={bulkEmails}
+                onChange={(e) => setBulkEmails(e.target.value)}
+                className="w-full h-48 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none"
+                placeholder="john@example.com, jane@example.com&#10;test@test.com"
+                required
+              />
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddSubscribersModal(false)}
+                  className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAddingSubscribers || !bulkEmails.trim()}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isAddingSubscribers ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                  Add Subscribers
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Recycle Bin Modal */}
       {showBinModal && (

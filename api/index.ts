@@ -703,6 +703,39 @@ app.post("/api/upload", authMiddleware, upload.array("images", 10), async (req, 
   }
 });
 
+app.post("/api/subscribers/bulk", authMiddleware, async (req, res) => {
+  await ensureDb();
+  const { emails } = req.body;
+  
+  if (!emails || !Array.isArray(emails)) {
+    return res.status(400).json({ error: "Invalid email list" });
+  }
+
+  const validEmails = emails.filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  
+  if (validEmails.length === 0) {
+    return res.status(400).json({ error: "No valid emails provided" });
+  }
+
+  try {
+    let addedCount = 0;
+    for (const email of validEmails) {
+      try {
+        await getPool().query(
+          'INSERT INTO subscribers (email, verified) VALUES ($1, true) ON CONFLICT (email) DO UPDATE SET verified = true, deleted_at = NULL',
+          [email.toLowerCase()]
+        );
+        addedCount++;
+      } catch (e) {
+        console.error(`Failed to add email ${email}:`, e);
+      }
+    }
+    res.json({ success: true, added: addedCount });
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to add subscribers: " + error.message });
+  }
+});
+
 app.get("/api/subscribers", authMiddleware, async (req, res) => {
   await ensureDb();
   try {
