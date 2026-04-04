@@ -734,8 +734,52 @@ export default function Admin() {
 
         <div ref={formRef} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 lg:p-12">
           <form onSubmit={handleSubmit} className="space-y-8">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-4">
+                Machine Images {editingId ? "(Add More or Reorder)" : "(Upload Multiple)"}
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
+                {previews.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all group cursor-move ${draggedIndex === index ? 'border-blue-500 opacity-50' : 'border-slate-200'}`}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <img src={item.url} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <div className="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
+                      {index === 0 ? "Thumbnail" : `Image ${index + 1}`}
+                    </div>
+                  </div>
+                ))}
+                <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-400 transition-all text-slate-400 hover:text-blue-500">
+                  <ImageIcon className="h-8 w-8 mb-2" />
+                  <span className="text-xs font-bold">Add Image</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <p className="text-sm text-slate-500">
+                Upload images of the machine. You can drag and drop the images to reorder them. The first image will be used as the thumbnail.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
+              <div className="md:col-span-2">
                 <label
                   htmlFor="name"
                   className="block text-sm font-bold text-slate-700 mb-2"
@@ -795,50 +839,6 @@ export default function Admin() {
                   placeholder="e.g., heidelberg-speedmaster"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-4">
-                Machine Images {editingId ? "(Add More or Reorder)" : "(Upload Multiple)"}
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
-                {previews.map((item, index) => (
-                  <div 
-                    key={index} 
-                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all group cursor-move ${draggedIndex === index ? 'border-blue-500 opacity-50' : 'border-slate-200'}`}
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDrop={(e) => handleDrop(e, index)}
-                  >
-                    <img src={item.url} alt="Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeFile(index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <div className="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
-                      {index === 0 ? "Thumbnail" : `Image ${index + 1}`}
-                    </div>
-                  </div>
-                ))}
-                <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-400 transition-all text-slate-400 hover:text-blue-500">
-                  <ImageIcon className="h-8 w-8 mb-2" />
-                  <span className="text-xs font-bold">Add Image</span>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-              <p className="text-sm text-slate-500">
-                Upload high-quality images of the machine. You can drag and drop the images to reorder them. The first image will be used as the thumbnail.
-              </p>
             </div>
 
             <div>
